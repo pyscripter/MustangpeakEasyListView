@@ -23,30 +23,14 @@ unit EasyScrollFrame;
 
 interface
 
-{$I Compilers.inc}
-{$I Options.inc}
-{$I ..\Include\Addins.inc}
-
-{$ifdef COMPILER_12_UP}
-  {$WARN IMPLICIT_STRING_CAST       OFF}
- {$WARN IMPLICIT_STRING_CAST_LOSS  OFF}
-{$endif COMPILER_12_UP}
-
 uses
   Windows,
   Messages,
   SysUtils,
   Classes,
   Graphics,
-  {$IFDEF COMPILER_7_UP}
   Themes,
   UxTheme,
-  {$ELSE}
-    {$IFDEF USETHEMES}
-    TmSchema,
-    UxTheme,
-    {$ENDIF}
-  {$ENDIF}
   Controls,
   MPCommonObjects,
   MPCommonUtilities;
@@ -144,9 +128,7 @@ type
     property OnCanResize;
     property OnClick;
     property OnConstrainedResize;
-    {$IFDEF COMPILER_5_UP}
     property OnContextPopup;
-    {$ENDIF}
     property OnDblClick;
     property OnDockDrop;
     property OnDockOver;
@@ -180,6 +162,9 @@ type
 
 implementation
 
+uses
+  System.Types;
+
 { TEasyScrollButton }
 constructor TCustomEasyScrollButton.Create(AOwner: TComponent);
 begin
@@ -208,7 +193,6 @@ procedure TCustomEasyScrollButton.DoPaintRect(ACanvas: TCanvas; WindowClipRect: 
     var
       uState: Cardinal;
     begin
-      uState := 0;
       if (sbsHovering in State) and not (sbsDown in State) then
       begin
         case Direction of
@@ -244,15 +228,11 @@ procedure TCustomEasyScrollButton.DoPaintRect(ACanvas: TCanvas; WindowClipRect: 
       DrawFrameControl(ACanvas.Handle, ClientRect, DFC_SCROLL, uState);
     end;
 
-{$IFDEF USETHEMES}
 var
   Part, uState: Longword;
-  {$ENDIF}
 begin
-  {$IFDEF USETHEMES}
     if DrawWithThemes then
     begin
-      uState := 0;
       Part := SBP_ARROWBTN;
       if Enabled then
       begin
@@ -296,9 +276,6 @@ begin
         Part, uState, ClientRect, @WindowClipRect);
     end else
       DrawWithOutThemes;
-  {$ELSE}
-    DrawWithoutThemes;
-  {$ENDIF}
 end;
 
 procedure TCustomEasyScrollButton.MouseDown(Button: TMouseButton; Shift: TShiftState; X: Integer; Y: Integer);

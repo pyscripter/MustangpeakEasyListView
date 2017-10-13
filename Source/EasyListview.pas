@@ -30,38 +30,11 @@ unit EasyListview;
 
 interface
 
-  {$IFDEF TNTSUPPORT}
-//   IMPORTANT - PLEASE READ then comment this line out.
-//  If using TNT you MUST include the TNT package for your specific compiler in the
-//  Requires section of this package.  It may be possible to compile without doing
-//  this but you WILL eventually have strange crashes in your application that will
-//  be difficult to understand.  The best way to do this in my opinion is to create
-//  a new folder in the package install directory called "Delphi_TNT" (or CBuilder_TNT)
-//  and copy all the files from the Delphi (or CBuilder) folder into it.  Now open the
-//  EasyListviewDx.dpk (or bpk) file in the "Delphi_TNT" (or CBuilder_TNT) based on your compiler
-//  version in a text editor.  In the "Requires" section add "TNTUnicodeVcl_Rx0", where
-//  the "x" is the version of Delphi you are using.  Open the dpk (bpk) file in your
-//  IDE. Select the menu option Projects>Options>Directories/Conditionals>Conditional
-//  and enter TNTSUPPORT. Compile the package, then open the EasyListviewDxD.dpk (or bpk)
-//  and compile and press the Install button.
-//  Now when you update the packages you won't have to redo all this.  Just install
-//  the update then compile the packages in the "Delphi_TNT" (or CBuilder_TNT) folders
-//  an you are done.
-  {$ENDIF}
-
 {$B-}
 
 {.$DEFINE DISABLE_ACCESSIBILITY}
 
-{$I Compilers.inc}
 {$I ..\Include\Debug.inc}
-{$I Options.inc}
-{$I ..\Include\Addins.inc}
-
-{$ifdef COMPILER_12_UP}
-  {$WARN IMPLICIT_STRING_CAST       OFF}
- {$WARN IMPLICIT_STRING_CAST_LOSS  OFF}
-{$endif COMPILER_12_UP}
 
 {.$DEFINE GXDEBUG}
 {.$DEFINE LOADGXUNIT}
@@ -75,12 +48,8 @@ uses
   DbugIntf,
   {$ENDIF}
 
-  {$IFDEF COMPILER_9_UP}
   Types,    // This MUST come before Windows
-  {$ENDIF}
-  {$IFDEF COMPILER_6_UP}
   Variants,
-  {$ENDIF}
   Windows,
   Messages,
   SysUtils,
@@ -90,21 +59,10 @@ uses
   {$IFDEF LOADGXUNIT}
   DbugIntf,
   {$ENDIF LOADGXUNIT}
-  {$IFDEF COMPILER_7_UP}
   Themes,
   UxTheme,
-  {$ELSE}
-    {$IFDEF USETHEMES}
-    TmSchema,
-    UxTheme,
-    {$ENDIF}
-  {$ENDIF}
   {$ifndef DISABLE_ACCESSIBILITY}
-    {$ifdef COMPILER_10_UP}
     oleacc, // MSAA support in Delphi 2006 or higher
-    {$ELSE}
-    EasyMSAAIntf, // MSAA support for Delphi up to 2005
-    {$ENDIF}
   {$ENDIF}
   ExtCtrls,
   Forms,
@@ -113,17 +71,10 @@ uses
   ActiveX,
   Menus,
   StdCtrls,
-  {$IFDEF COMPILER_6_UP}
-    RTLConsts,
-  {$ELSE}
-    Consts,
-  {$ENDIF}
+  RTLConsts,
   {$IFDEF SpTBX}
   SpTBXItem,
   SpTBXSkins,
-  {$ENDIF}
-  {$IFDEF TNTSUPPORT}
-  TntStdCtrls,
   {$ENDIF}
   EasyLVResources,
   MPCommonUtilities,
@@ -1024,16 +975,9 @@ type
 
   // **************************************************************************
   // TEasyMemo
-  //   A class that uses TntMemo when TNTSUPPORT is defined
   // **************************************************************************
-  {$IFDEF TNTSUPPORT}
-  TEasyMemo = class(TTntMemo);
-  TEasyEdit = class(TTntEdit);
-  {$ELSE}
   TEasyMemo = class(TMemo);
   TEasyEdit = class(TEdit);
-  {$ENDIF}
-
 
   // **************************************************************************
   // TEasyInterfacedPersistent
@@ -1639,7 +1583,7 @@ type
     FPaintInfo: TEasyPaintInfoBasic;   // Information to draw the item
     FRefCount: Integer;
     FState: TEasyStorageObjectStates;  // State of the item
-    FTag: Integer;
+    FTag: NativeInt;
     FVisibleIndex: Integer;            // Index of the item across all collections (flat list across collection in group)
                                        // See TEasyItem.VisibleIndexInGroup
     function GetAlignment: TAlignment;
@@ -1818,7 +1762,7 @@ type
     property Index: Integer read GetIndex;
     property OwnerListview: TCustomEasyListview read GetOwnerListview;
     property RefCount: Integer read FRefCount;
-    property Tag: Integer read FTag write FTag default 0;
+    property Tag: NativeInt read FTag write FTag default 0;
     property ViewRect: TRect read GetViewRect;
     property VisibleIndex: Integer read FVisibleIndex;
   end;
@@ -2079,7 +2023,7 @@ type
     FHideFromDFM: Boolean;
     FList: TList;
     FReIndexCount: Integer;
-    FTag: Integer;
+    FTag: NativeInt;
     FVisibleList: TList;
     function GetCount: Integer;
     function GetItem(Index: Integer): TEasyCollectionItem;
@@ -2125,7 +2069,7 @@ type
     property ReIndexDisable: Boolean read GetReIndexDisable write SetReIndexDisable;
     property VisibleCount: Integer read GetVisibleCount;
   published
-    property Tag: Integer read FTag write FTag default 0;
+    property Tag: NativeInt read FTag write FTag default 0;
   end;
   TEasyCollectionClass = class of TEasyCollection;
 
@@ -5403,7 +5347,7 @@ type
     property PaintInfoColumn: TEasyPaintInfoBaseColumn read GetPaintInfoColumn write SetPaintInfoColumn;
     property PaintInfoGroup: TEasyPaintInfoBaseGroup read GetPaintInfoGroup write SetPaintInfoGroup;
     property PaintInfoItem: TEasyPaintInfoBaseItem read GetPaintInfoItem write SetPaintInfoItem;
-    {$IFDEF COMPILER_7_UP}property ParentBackground default False;{$ENDIF COMPILER_7_UP}
+    property ParentBackground default False;
     property ParentColor default False;
     property PopupMenuHeader: TPopupMenu read FPopupMenuHeader write FPopupMenuHeader;
     property ScratchCanvas: TControlCanvas read GetScratchCanvas write FScratchCanvas;
@@ -5569,7 +5513,7 @@ type
     property PaintInfoGroup: TEasyPaintInfoGroup read GetPaintInfoGroup write SetPaintInfoGroup;
     property PaintInfoItem: TEasyPaintInfoItem read GetPaintInfoItem write SetPaintInfoItem;
     property ParentBiDiMode;
-    {$IFDEF COMPILER_7_UP}property ParentBackground;{$ENDIF}
+    property ParentBackground;
     property ParentColor;
     property ParentCtl3D;
     property ParentFont;
@@ -5596,9 +5540,7 @@ type
     property OnCanResize;
     property OnClick;
     property OnConstrainedResize;
-    {$IFDEF COMPILER_5_UP}
     property OnContextPopup;
-    {$ENDIF}
     property OnAutoGroupGetKey;
     property OnAutoSortGroupCreate;
     property OnBeginUpdate;
@@ -5839,7 +5781,7 @@ type
     property ImagesSmall;
     property PaintInfoGroup;
     property ParentBiDiMode;
-    {$IFDEF COMPILER_7_UP}property ParentBackground;{$ENDIF}
+    property ParentBackground;
     property ParentColor;
     property ParentCtl3D;
     property ParentFont;
@@ -5859,7 +5801,7 @@ type
     property OnCanResize;
     property OnClick;
     property OnConstrainedResize;
-    {$IFDEF COMPILER_5_UP} property OnContextPopup; {$ENDIF}
+    property OnContextPopup;
     property OnAutoSortGroupCreate;
     property OnDblClick;
     property OnDragDrop;
@@ -5956,7 +5898,7 @@ type
     property PaintInfoGroup: TEasyPaintInfoTaskbandGroup read GetPaintInfoGroup write SetPaintInfoGroup;
     property PaintInfoItem: TEasyPaintInfoTaskBandItem read GetPaintInfoItem write SetPaintInfoItem;
     property ParentBiDiMode;
-    {$IFDEF COMPILER_7_UP}property ParentBackground;{$ENDIF}
+    property ParentBackground;
     property ParentColor;
     property ParentCtl3D;
     property ParentFont;
@@ -5978,9 +5920,7 @@ type
     property OnCanResize;
     property OnClick;
     property OnConstrainedResize;
-    {$IFDEF COMPILER_5_UP}
     property OnContextPopup;
-    {$ENDIF}
     property OnAutoSortGroupCreate;
     property OnDblClick;
     property OnDragDrop;
@@ -6115,7 +6055,7 @@ implementation
 
 uses
   {$ifndef DISABLE_ACCESSIBILITY}EasyListviewAccessible,{$endif}
-  Math;
+  System.UITypes, System.Math;
 
 const
   PERSISTENTOBJECTSTATES = [esosSelected, esosEnabled, esosVisible, esosChecked, esosBold]; // States that are stored to a stream for persistance
@@ -6311,20 +6251,12 @@ begin
   begin
     CreateHandle := WideFileCreate(FileName);
     if CreateHandle < 0 then
-     {$IFNDEF COMPILER_5_UP}
-      raise EFCreateError.Create('Can not create file: ' + FileName);
-     {$ELSE}
      raise EFCreateError.CreateResFmt(PResStringRec(@SFCreateError), [FileName]);
-     {$ENDIF COMPILER_5_UP}
   end else
   begin
     CreateHandle := WideFileOpen(FileName, Mode);
     if CreateHandle < 0 then
-     {$IFNDEF COMPILER_5_UP}
-      raise EFCreateError.Create('Can not create file: ' + FileName);
-     {$ELSE}
      raise EFCreateError.CreateResFmt(PResStringRec(@SFCreateError), [FileName]);
-     {$ENDIF COMPILER_5_UP}
   end;
   inherited Create(CreateHandle);
 end;
@@ -6764,11 +6696,7 @@ end;
 
 procedure TEasyGlobalItems.IndexError(Index: Integer);
 begin
-  {$IFDEF COMPILER_5_UP}
   TList.Error(SListIndexError, Index);
-  {$ELSE}
-  TList.Error('List index out of bounds (%d)', Index);
-  {$ENDIF}
 end;
 
 function TEasyGlobalItems.IndexOf(Item: TEasyItem): Integer;
@@ -8002,10 +7930,6 @@ begin
     Item.Invalidate(ImmediateUpdate)
 end;
 
-{$IFDEF COMPILER_6_UP}
-{$ELSE}
-{$ENDIF COMPILER_6_UP}
-
 procedure TEasyGroups.LoadFromStream(S: TStream; Version: Integer = EASYLISTVIEW_STREAM_VERSION);
 begin
   inherited LoadFromStream(S, Version);
@@ -8606,7 +8530,6 @@ end;
 
 function TEasyGroup.GetDefaultGridClass: TEasyGridGroupClass;
 begin
-  Result := nil;
   case OwnerListview.View of
     elsIcon: Result := TEasyGridIconGroup;
     elsSmallIcon: Result := TEasyGridSmallIconGroup;
@@ -9699,16 +9622,13 @@ procedure TEasyViewGroup.PaintExpandButton(Group: TEasyGroup; ACanvas: TCanvas;
 //
 var
   Image, ExpandImage, CollapseImage: TBitmap;
-  {$IFDEF USETHEMES}
   Part, uState: Longword;
   R: TRect;
-  {$ENDIF}
 begin
   if MarginEdge in [egmeTop] then
   begin
     GetCollapseExpandImages(ExpandImage, CollapseImage);
 
-    {$IFDEF USETHEMES}
     if Group.OwnerListview.DrawWithThemes and not CustomExpandImages then
     begin
       Part := TVP_GLYPH;
@@ -9724,7 +9644,6 @@ begin
         Part, uState, R, nil);
       Exit;
     end;
-    {$ENDIF}
 
     // If the border is the header and it is expandable then must draw the
     // "+" expand box
@@ -13287,7 +13206,6 @@ function TEasyDropTargetManager.DragEnter(const dataObj: IDataObject;
   grfKeyState: Integer; pt: TPoint; var dwEffect: Integer): HResult;
 var
   Effect: TCommonDropEffect;
-  Effects: TCommonDropEffects;
   KeyState: TCommonKeyStates;
   StgMedium: TStgMedium;
 begin
@@ -13297,7 +13215,6 @@ begin
   if Owner.DragManager.Enabled then
   begin
     KeyState := KeyToKeyStates(grfKeyState);
-    Effects := DropEffectToDropEffectStates(dwEffect);
 
     // Get the "Windows Style" effect with the key modifiers
     Effect := KeyStateToDropEffect(KeyState);
@@ -13367,7 +13284,6 @@ function TEasyDropTargetManager.Drop(const dataObj: IDataObject;
   grfKeyState: Integer; pt: TPoint; var dwEffect: Integer): HResult;
 var
   Effect: TCommonDropEffect;
-  Effects: TCommonDropEffects;
   KeyState: TCommonKeyStates;
   Handled: Boolean;
 begin
@@ -13375,7 +13291,6 @@ begin
     DropTargetHelper.Drop(dataObj, Pt, dwEffect);
 
   KeyState := KeyToKeyStates(grfKeyState);
-  Effects := DropEffectToDropEffectStates(dwEffect);
 
   // Get the "Windows Style" effect with the key modifiers
   Effect := KeyStateToDropEffect(KeyState);
@@ -14078,10 +13993,6 @@ begin
   FIncrementalSearch := TEasyIncrementalSearchManager.Create(Self);
   FScratchCanvas := TControlCanvas.Create;
   FScratchCanvas.Control := Self;
-  {$IFNDEF COMPILER_6_UP}
-  Width := 100;
-  Height := 200;
-  {$ENDIF COMPILER_6_UP}
   {$IFDEF SpTBX}
   SkinManager.AddSkinNotification(Self);
   {$ENDIF}
@@ -14119,9 +14030,7 @@ begin
   FreeAndNil(FEditManager);
   FreeAndNil(FGlobalImages);
   FreeAndNil(FCellSizes);
-  {$IFDEF COMPILER_5_UP}
   FreeAndNil(FGroupFont);   // Bug in D4
-  {$ENDIF COMPILER_5_UP}
   FreeAndNil(FPaintInfoGroup);
   FreeAndNil(FPaintInfoItem);
   FreeAndNil(FPaintInfoColumn);
@@ -14499,10 +14408,8 @@ end;
 
 procedure TCustomEasyListview.CalcThemedNCSize(var ContextRect: TRect);
 begin
-  {$IFDEF USETHEMES}
   if Succeeded(GetThemeBackgroundContentRect(Themes.ListviewTheme, Canvas.Handle, LVP_EMPTYTEXT, LIS_NORMAL, ContextRect, @ContextRect)) then
     InflateRect(ContextRect, -(BorderWidth), -(BorderWidth));
-  {$ENDIF USETHEMES}
 end;
 
 procedure TCustomEasyListview.CancelCut;
@@ -16338,7 +16245,6 @@ end;
 procedure TCustomEasyListview.HandleDblClick(Button: TCommonMouseButton; Msg: TWMMouse);
 var
   Group: TEasyGroup;
-  KeyState: TCommonKeyStates;
   GroupHitInfo: TEasyGroupHitTestInfoSet;
   GroupInfo: TEasyHitInfoGroup;
   Item: TEasyItem;
@@ -16347,7 +16253,6 @@ var
   ViewPt: TPoint;
   Handled: Boolean;
 begin
-  KeyState := KeyToKeyStates(Msg.Keys);
   ViewPt := Scrollbars.MapWindowToView(Msg.Pos);
   if ViewSupportsHeader and (Header.Visible) and (Msg.YPos < Header.Height) then
     Header.WMLButtonDblClk(Msg)
@@ -17093,7 +16998,6 @@ end;
 
 procedure TCustomEasyListview.PaintThemedNCBkgnd(ACanvas: TCanvas; ARect: TRect);
 begin
-  {$IFDEF USETHEMES}
   if ShowThemedBorder then
   begin
     // The border in Win7 for the Listview Theme is darker than the rest of the
@@ -17103,7 +17007,6 @@ begin
     else
       DrawThemeBackground(Themes.ListviewTheme, ACanvas.Handle, 0, 0, ARect, nil)
   end
-  {$ENDIF USETHEMES}
 end;
 
 procedure TCustomEasyListview.PasteFromClipboard;
@@ -18138,7 +18041,6 @@ end;
 
 function TEasyCollectionItem.DefaultImageList(ImageSize: TEasyImageSize): TCustomImageList;
 begin
-  Result := nil;
   case ImageSize of
    eisSmall: Result := OwnerListview.ImagesSmall;
    eisLarge: Result := OwnerListview.ImagesLarge;
@@ -19127,7 +19029,7 @@ begin
     // object to make sure it creates the correct item type
     for i := 0 to ItemCount - 1 do
     begin
-      Cls := GetClass(StreamHelper.ReadString(Stream));
+      Cls := GetClass(string(StreamHelper.ReadString(Stream)));
       Assert(Cls <> nil, 'If using custom item types for Item, Groups or Columns you must register them with the streaming system with RegisterClass(TMyEasyClassItemType)');
       if Assigned(Cls) then
       begin
@@ -19185,7 +19087,7 @@ begin
   StreamHelper.WriteInteger(Stream, FList.Count);
   for i := 0 to FList.Count - 1 do
   begin
-    StreamHelper.WriteString(Stream, TEasyCollectionItem( Items[i]).ClassName);
+    StreamHelper.WriteString(Stream, AnsiString(TEasyCollectionItem( Items[i]).ClassName));
     TEasyCollectionItem( Items[i]).SaveToStream(Stream); // Write custom data to the stream
   end
 end;
@@ -19754,10 +19656,8 @@ procedure TEasyHeader.PaintTo(ACanvas: TCanvas; ARect: TRect; ViewRectCoords: Bo
 var
   Column: TEasyColumn;
   Handled: Boolean;
-  {$IFDEF USETHEMES}
   PartID,
   StateID: LongWord;
-  {$ENDIF}
 begin
   Handled := False;
   CanvasStore.StoreCanvasState(ACanvas);
@@ -19772,14 +19672,12 @@ begin
       SpDrawXPHeader(ACanvas, ViewRect, False, False);
     end else
     {$ENDIF SpTBX}
-    {$IFDEF USETHEMES}
     if OwnerListview.DrawWithThemes then
     begin
       PartID := HP_HEADERITEM;
       StateID := HIS_NORMAL;
       DrawThemeBackground(OwnerListview.Themes.HeaderTheme, ACanvas.Handle, PartID, StateID, ViewRect, nil);
     end else
-    {$ENDIF USETHEMES}
     begin
       ACanvas.Brush.Color := Color;
       ACanvas.FillRect(DisplayRect);
@@ -22292,7 +22190,7 @@ begin
         taRightJustify: Include(DrawTextFlags, dtRight);
         taCenter:  Include(DrawTextFlags, dtCenter);
       end;
-      DrawTextFlags := [dtCalcRect, dtCalcRectAlign, dtEndEllipsis, dtTop];
+      DrawTextFlags := DrawTextFlags + [dtCalcRect, dtCalcRectAlign, dtEndEllipsis, dtTop];
 
       // Calcuate the Bounds of the Cell that is allowed to be drawn in
       // **********
@@ -23221,11 +23119,9 @@ var
   RaisedButtonStyle, RaisedButtonFlags: LongWord;
   R: TRect;
   Pt: TPoint;
-  {$IFDEF USETHEMES}
   PartID,
   StateID: LongWord;
   Bits: TBitmap;
-  {$ENDIF}
 begin
   Pt.x := 0;
   Pt.y := 0;
@@ -23235,7 +23131,6 @@ begin
     SpDrawXPHeader(ACanvas, Column.DisplayRect, Column.HotTracking[Pt], Column.Clicking)
   else
   {$ENDIF SpTBX}
-  {$IFDEF USETHEMES}
   if OwnerListview.DrawWithThemes then
   begin
     PartID := HP_HEADERITEM;
@@ -23285,7 +23180,6 @@ begin
     end;
  //   Exit;
   end else
-  {$ENDIF USETHEMES}
   begin
     ACanvas.Brush.Color := Column.Color;
     ACanvas.FillRect(Column.DisplayRect);
@@ -23357,7 +23251,6 @@ begin
   if Column.DropDownButton.Visible and (RectWidth(RectArray.DropDownArrow) > 0) then
   begin
     R := RectArray.DropDownArrow;
-    {$IFDEF USETHEMES}
     if OwnerListview.DrawWithThemes then
     begin
       { Draw the DropDown Button }
@@ -23374,7 +23267,6 @@ begin
         CtlState := CBXS_DISABLED;
       DrawThemeBackground(OwnerListview.Themes.ComboBoxTheme, ACanvas.Handle, CtlType, CtlState, R, nil)
     end else
-    {$ENDIF USETHEMES}
     begin
       InflateRect(R, -1, -1);  // Looks better
       { Draw the DropDown Button }
@@ -28504,10 +28396,8 @@ var
   {$IFDEF SpTBX}
   CheckState: TCheckBoxState;
   {$ENDIF}
-  {$IFDEF USETHEMES}
   uState: Longword;
   Part: BUTTONPARTS;
-  {$ENDIF}
   Pt: TPoint;
 begin
   {$IFDEF SpTBX}
@@ -28526,7 +28416,6 @@ begin
   end;
   {$ENDIF}
 
-  {$IFDEF USETHEMES}
   if OwnerListview.DrawWithThemes then
     begin
       uState := 0;
@@ -28603,7 +28492,6 @@ begin
     DrawThemeBackground(OwnerListview.Themes.ButtonTheme, ACanvas.Handle, Part, uState, ARect, nil);
     Exit;
   end;
-  {$ENDIF}
 
   case CheckType of
     ectBox:
@@ -28868,12 +28756,12 @@ TWMKeyDown);
 // The WM_KEYDOWN message is passed to the manager to handle the incremental
 // search
 //
-var
-  Shift: TShiftState;
+//var
+//  Shift: TShiftState;
 begin
   if Enabled then
   begin
-    Shift := KeyDataToShiftState(Msg.KeyData);
+//    Shift := KeyDataToShiftState(Msg.KeyData);
  //   if (Shift * [ssCtrl, ssAlt] = []) and ((Msg.CharCode > VK_HELP) and (Msg.CharCode < VK_LWIN)) or ((Msg.CharCode > VK_APPS) and (Msg.CharCode < VK_F1) )  then
       StartSearch
   end
@@ -29431,17 +29319,14 @@ begin
 end;
 
 procedure TEasyViewTaskBandGroup.GetExpandImageSize(Group: TEasyGroup; var ImageW: Integer; var ImageH: Integer);
-{$IFDEF USETHEMES}
 var
   PartID, StateID: LongWord;
   R: TRect;
-{$ENDIF}
 begin
   ImageW := 0;
   ImageH := 0;
   if Group.Expandable then
   begin
-    {$IFDEF USETHEMES}
     if Group.OwnerListview.DrawWithThemes then
     begin
       StateID := EBNGC_NORMAL;
@@ -29463,10 +29348,6 @@ begin
       ImageW := 16;
       ImageH := 16;
     end;
-    {$ELSE}
-      ImageW := 16;
-      ImageH := 16;
-    {$ENDIF}
   end;
 end;
 
@@ -29480,11 +29361,9 @@ var
   HeaderBand, FooterBand: TRect;
   TempRectArray: TEasyRectArrayObject;
   ImageW, ImageH, ExpandImageW, ExpandImageH: Integer;
-  {$IFDEF USETHEMES}
   R: TRect;
   PartID, StateID: LongWord;
   Flags, Flags2: DWORD;
-  {$ENDIF}
 begin
   Group.Initialized := True;
 
@@ -29548,7 +29427,6 @@ begin
     begin
       LoadTextFont(Group, OwnerListview.ScratchCanvas);
 
-      {$IFDEF USETHEMES}
       if Group.OwnerListview.DrawWithThemes then
       begin
         if Group.Bold then
@@ -29581,9 +29459,6 @@ begin
         TextSize.cy := RectHeight(R);
       end else
         TextSize := TextExtentW(Group.Caption, OwnerListview.ScratchCanvas.Font);
-      {$ELSE}
-      TextSize := TextExtentW(Group.Caption, OwnerListview.ScratchCanvas.Font);
-      {$ENDIF USETHEMES}
     end else
     begin
       TextSize.cx := 0;
@@ -29654,18 +29529,12 @@ end;
 
 procedure TEasyViewTaskBandGroup.LoadTextFont(Group: TEasyGroup; ACanvas: TCanvas);
 begin
-  {$IFDEF USETHEMES}
   inherited LoadTextFont(Group, ACanvas);
   if not(Group.OwnerListview.DrawWithThemes) then
   begin
     if Group.Bold then
       ACanvas.Font.Color := clHighlightText
   end;
-  {$ELSE}
-  inherited LoadTextFont(Group, ACanvas);
-  if Group.Bold then
-    ACanvas.Font.Color := clHighlightText
-  {$ENDIF}
 end;
 
 procedure TEasyViewTaskBandGroup.PaintBackground(Group: TEasyGroup; ACanvas: TCanvas; MarginEdge: TEasyGroupMarginEdge; ObjRect: TRect; RectArray: TEasyRectArrayObject);
@@ -29682,11 +29551,9 @@ procedure TEasyViewTaskBandGroup.PaintBackground(Group: TEasyGroup; ACanvas: TCa
     end
   end;
 
-{$IFDEF USETHEMES}
 var
   PartID, StateID: LongWord;
   R, HeaderR: TRect;
-{$ENDIF}
 {$IFDEF SpTBX}
 var
   TBXState: TSpTBXSkinStatesType;
@@ -29709,7 +29576,6 @@ begin
         CurrentSkin.PaintBackground(ACanvas, TBX_R, skncButton, TBXState, True, False);
     end else
   {$ENDIF SpTBX}
-  {$IFDEF USETHEMES}
   if Group.OwnerListview.DrawWithThemes then
   begin
     case MarginEdge of
@@ -29741,9 +29607,6 @@ begin
   end else
     DrawNonThemed;
   Exit;
-  {$ELSE}
-  DrawNonThemed;
-  {$ENDIF}
 end;
 
 procedure TEasyViewTaskBandGroup.PaintBand(Group: TEasyGroup; ACanvas: TCanvas; MarginEdge: TEasyGroupMarginEdge; ObjRect: TRect; RectArray: TEasyRectArrayObject);
@@ -29819,10 +29682,8 @@ procedure TEasyViewTaskBandGroup.PaintExpandButton(Group: TEasyGroup; ACanvas: T
     end
   end;
 
-{$IFDEF USETHEMES}
 var
   PartID, StateID: LongWord;
-{$ENDIF}
 begin
   if (MarginEdge = egmeTop) and Group.Expandable then
   begin
@@ -29839,7 +29700,6 @@ begin
       Exit;
     end else
     {$ENDIF SpTBX}
-    {$IFDEF USETHEMES}
     if Group.OwnerListview.DrawWithThemes then
     begin
       StateID := EBNGC_NORMAL;
@@ -29867,13 +29727,6 @@ begin
         ACanvas.Pen.Color := clBlack;
       DrawNonThemed;
     end;
-    {$ELSE}
-    if Group.Bold then
-      ACanvas.Pen.Color := clHighlightText
-    else
-      ACanvas.Pen.Color := clBlack;
-    DrawNonThemed;
-    {$ENDIF}
   end
 end;
 
@@ -29911,25 +29764,18 @@ begin
     SpDrawXPText(ACanvas, Group.Caption, RectArray.LabelRect, Flags);
   end else
   {$ENDIF SpTBX}
-  {$IFDEF USETHEMES}
   if DrawThemed and (MarginEdge = egmeTop) and Group.OwnerListview.DrawWithThemes then
   begin
     PaintTextTopThemed(ACanvas, Group, ObjRect, RectArray);
   end else
     inherited;
-  {$ELSE}
-    inherited;
-  {$ENDIF}
 end;
 
 procedure TEasyViewTaskBandGroup.PaintTextTopThemed(ACanvas: TCanvas; Group: TEasyGroup; ObjRect: TRect; RectArray: TEasyRectArrayObject);
-{$IFDEF USETHEMES}
 var
   PartID, StateID: LongWord;
   Flags, Flags2: DWORD;
-{$ENDIF}
 begin
-  {$IFDEF USETHEMES}
   if Group.Bold then
     PartID := EBP_SPECIALGROUPHEAD
   else
@@ -29955,17 +29801,14 @@ begin
   else
     Flags2 := 1;
   DrawThemeText(OwnerListview.Themes.ExplorerBarTheme, ACanvas.Handle, PartID, StateID, PWideChar(Group.Caption), -1, Flags, Flags2, RectArray.LabelRect);
-  {$ENDIF USETHEMES}
 end;
 
 { TEasyTaskBandBackgroundManager }
 procedure TEasyTaskBandBackgroundManager.PaintTo(ACanvas: TCanvas; ARect: TRect; PaintDefault: Boolean);
-{$IFDEF USETHEMES}
 var
   PartID, StateID: LongWord;
   R: TRect;
   Theme: HTheme;
-{$ENDIF}
 begin
   {$IFDEF SpTBX}
   if SkinManager.GetSkinType in [sknSkin, sknDelphiStyle] then
@@ -29975,7 +29818,6 @@ begin
     inherited;
   Exit;
   {$ENDIF SpTBX}
-  {$IFDEF USETHEMES}
   Theme := OwnerListview.Themes.ExplorerBarTheme;
   if OwnerListview.DrawWithThemes then
   begin
@@ -29985,7 +29827,6 @@ begin
     StateID := 0;
     DrawThemeBackground(Theme, ACanvas.Handle, PartID, StateID, R, nil);
   end else
-  {$ENDIF}
     inherited
 end;
 
@@ -30106,17 +29947,13 @@ begin
   Memo.Alignment := taCenter;
   Memo.Text := EditText(Item, Column);
   Memo.OnKeyDown := OnEditKeyDown;
-  {$IFDEF USETHEMES}
   if not Listview.Themed then
-  {$ENDIF USETHEMES}
   begin
     Memo.Ctl3D := False;
     Memo.BorderStyle := bsSingle;
-    {$IFDEF COMPILER_6_UP}
     Memo.BevelInner := bvNone;
     Memo.BevelOuter := bvNone;
     Memo.BevelKind := bkNone;
-    {$ENDIF}
   end
 end;
 
@@ -30231,17 +30068,13 @@ begin
   Edit.Parent := Listview; // Do this first or it resets at least BorderStyle to True
   Edit.Text := EditText(Item, Column);
   Edit.OnKeyDown := OnEditKeyDown;
-  {$IFDEF USETHEMES}
   if not Listview.Themed then
-  {$ENDIF USETHEMES}
   begin
     Edit.Ctl3D := False;
     Edit.BorderStyle := bsSingle;
-    {$IFDEF COMPILER_6_UP}
     Edit.BevelInner := bvNone;
     Edit.BevelOuter := bvNone;
     Edit.BevelKind := bkNone;
-    {$ENDIF}
   end
 end;
 

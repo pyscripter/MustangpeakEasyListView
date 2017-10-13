@@ -27,33 +27,15 @@ unit EasyTaskPanelForm;
 // practical do to the way the VCL was designed.
 //----------------------------------------------------------------------------
 
-{$I Compilers.inc}
-{$I Options.inc}
-{$I ..\Include\Addins.inc}
-
-{$ifdef COMPILER_12_UP}
-  {$WARN IMPLICIT_STRING_CAST       OFF}
- {$WARN IMPLICIT_STRING_CAST_LOSS  OFF}
-{$endif COMPILER_12_UP}
-
 interface
 
 uses
   Windows,
   Messages,
   SysUtils,
-  {$IFDEF COMPILER_6_UP}
   Variants,
-  {$ENDIF}
-  {$IFDEF COMPILER_7_UP}
   Themes,
   UxTheme,
-  {$ELSE}
-    {$IFDEF USETHEMES}
-    TmSchema,
-    UxTheme,
-    {$ENDIF}
-  {$ENDIF}
   {$IFDEF SpTBX}
   SpTBXSkins,
   {$ENDIF SpTBX}
@@ -68,7 +50,7 @@ type
   TEasyTaskPanelForm = class(TCustomForm)
   private
     FThemed: Boolean;
-    {$IFDEF USETHEMES}FThemes: TCommonThemeManager;{$ENDIF USETHEMES}
+    FThemes: TCommonThemeManager;
     function GetThemed: Boolean;
     procedure SetThemed(const Value: Boolean);
   protected
@@ -82,9 +64,9 @@ type
     procedure WMEraseBkgnd(var Msg: TWMEraseBkgnd); message WM_ERASEBKGND;
     procedure WMHScroll(var Msg: TWMHScroll); message WM_HSCROLL;
     procedure WMPaint(var Msg: TWMPaint); message WM_PAINT;
-    {$IFDEF USETHEMES}procedure WMThemeChanged(var Message: TMessage); message WM_THEMECHANGED;{$ENDIF USETHEMES}
+    procedure WMThemeChanged(var Message: TMessage); message WM_THEMECHANGED;
     procedure WMVScroll(var Msg: TWMVScroll); message WM_VSCROLL;
-    {$IFDEF USETHEMES}property Themes: TCommonThemeManager read FThemes write FThemes;{$ENDIF USETHEMES}
+    property Themes: TCommonThemeManager read FThemes write FThemes;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -145,7 +127,7 @@ implementation
 { TEasyTaskPanelForm }
 constructor TEasyTaskPanelForm.Create(AOwner: TComponent);
 begin
-  {$IFDEF USETHEMES}Themes := TCommonThemeManager.Create(Self);{$ENDIF USETHEMES}
+  Themes := TCommonThemeManager.Create(Self);
   inherited Create(AOwner);
   FThemed := True;
   DoubleBuffered := True;
@@ -153,17 +135,15 @@ end;
 
 destructor TEasyTaskPanelForm.Destroy;
 begin
-  {$IFDEF USETHEMES}FreeAndNil(FThemes);{$ENDIF USETHEMES}
+  FreeAndNil(FThemes);
   inherited Destroy;
 end;
 
 function TEasyTaskPanelForm.GetThemed: Boolean;
 begin
   Result := False;
-  {$IFDEF USETHEMES}
   if not (csLoading in ComponentState) then
     Result := FThemed and UseThemes;
-  {$ENDIF USETHEMES}
 end;
 
 procedure TEasyTaskPanelForm.CreateParams(var Params: TCreateParams);
@@ -176,7 +156,7 @@ end;
 procedure TEasyTaskPanelForm.CreateWnd;
 begin
   inherited CreateWnd;
-  {$IFDEF USETHEMES}Themes.ThemesLoad;{$ENDIF USETHEMES}
+  Themes.ThemesLoad;
 end;
 
 procedure TEasyTaskPanelForm.DestroyWnd;
@@ -219,7 +199,6 @@ begin
   if FThemed <> Value then
   begin
     FThemed := Value;
-    {$IFDEF USETHEMES}
     Themes.ThemesLoad;
     if HandleAllocated then
     begin
@@ -229,17 +208,14 @@ begin
       Visible := not Visible;
       InvalidateRect(Handle, nil, True);
     end;
-    {$ENDIF USETHEMES}
   end
 end;
 
 procedure TEasyTaskPanelForm.WMDestroy(var Msg: TMessage);
 begin
   inherited;
- {$IFDEF USETHEMES}
    if Assigned(Themes) then
      Themes.ThemesFree;
- {$ENDIF USETHEMES}
 end;
 
 procedure TEasyTaskPanelForm.WMEraseBkgnd(var Msg: TWMEraseBkgnd);
@@ -252,9 +228,7 @@ procedure TEasyTaskPanelForm.WMEraseBkgnd(var Msg: TWMEraseBkgnd);
 
 var
   DC: TControlCanvas;
-{$IFDEF USETHEMES}
   PartID, StateID: LongWord;
-{$ENDIF}
 begin
   DC := TControlCanvas.Create;
   try
@@ -266,7 +240,6 @@ begin
       CurrentSkin.PaintBackground(DC, ClientRect, skncWindow{skncPanel}, sknsNormal, True, True, false, [akLeft, akTop, akRight, akBottom]);
     end else
     {$ENDIF SpTBX}
-    {$IFDEF USETHEMES}
     if Themed and not (csDesigning in ComponentState) then
     begin
       PartID := EBP_NORMALGROUPBACKGROUND;
@@ -276,9 +249,6 @@ begin
     else
       DrawNonThemed(DC);
     Exit;
-    {$ELSE}
-    DrawNonThemed(DC);
-    {$ENDIF}
   finally
     DC.Handle := 0;
     DC.Free;
@@ -297,14 +267,12 @@ begin
   inherited;
 end;
 
-{$IFDEF USETHEMES}
 procedure TEasyTaskPanelForm.WMThemeChanged(var Message: TMessage);
 begin
   inherited;
   Themes.ThemesFree;
   Themes.ThemesLoad;
 end;
-{$ENDIF USETHEMES}
 
 procedure TEasyTaskPanelForm.WMVScroll(var Msg: TWMVScroll);
 begin

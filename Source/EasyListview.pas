@@ -3902,7 +3902,7 @@ type
   published
     property AutoMove: Boolean read FAutoMove write FAutoMove default True;
     property CenterMark: Boolean read FCenterMark write FCenterMark default True;
-    property Color: TColor read FColor write FColor default clBlack;
+    property Color: TColor read FColor write FColor default clGrayText;
     property Enabled: Boolean read FEnabled write FEnabled default False;
     property ReSelectAfterMove: Boolean read FReSelectAfterMove write FReSelectAfterMove default True;
     property Width: Integer read FWidth write FWidth default 2;
@@ -4117,7 +4117,7 @@ type
     property GroupSelections: Boolean read FGroupSelections write SetGroupSelections default False;
     property InactiveBorderColor: TColor read FInactiveBorderColor write FInactiveBorderColor default clInactiveBorder;
     property InactiveColor: TColor read FInactiveColor write FInactiveColor default clInactiveBorder;
-    property InactiveTextColor: TColor read FInactiveTextColor write FInactiveTextColor default clBlack;
+    property InactiveTextColor: TColor read FInactiveTextColor write FInactiveTextColor default clWindowText;
     property MouseButton: TCommonMouseButtons read GeTCommonMouseButton write SeTCommonMouseButton default [cmbLeft];
     property MouseButtonSelRect: TCommonMouseButtons read GetMouseButtonSelRect write SetMouseButtonSelRect default [cmbLeft, cmbRight];
     property MultiSelect: Boolean read FMultiSelect write SetMultiSelect default False;
@@ -11155,7 +11155,7 @@ begin
           begin
             List.Add(Item);
             Item := OwnerListview.Selection.Next(Item);
-          end;  
+          end;
           OwnerListview.Selection.ClearAll;
 
           TargetCollection := InsertMark.Target;
@@ -11480,7 +11480,7 @@ begin
   FBorderColor := clHighlight;
   FInactiveBorderColor := clInactiveBorder;
   FInactiveColor := clInactiveBorder;
-  FInactiveTextColor := clBlack;
+  FInactiveTextColor := clWindowText;
   FTextColor := clHighlightText;
   FRoundRectRadius := 4;
   FBlendColorSelRect := clHighlight;
@@ -15888,7 +15888,7 @@ procedure TCustomEasyListview.DoPaintRect(ACanvas: TCanvas; ClipRect: TRect; Sel
           if DragManager.InsertMark.DropMarkerDir = dmdVert then
           begin
             RectDiv3 := RectWidth(InsertMarkR) div 3;
-            Start := InsertMarkR.Left + RectDiv3;   
+            Start := InsertMarkR.Left + RectDiv3;
             for i := Start to Start + RectDiv3 - 1 do
             begin
               ACanvas.MoveTo(i, InsertMarkR.Top);
@@ -20716,7 +20716,7 @@ begin
       GlassBits.Free;
     end
     else
-              // AlphaBlend the memory bitmap
+    // AlphaBlend the memory bitmap
       AlphaBlend(0, Bits.Canvas.Handle, Rect(0, 0, Bits.Width, Bits.Height), Point(0, 0),
         cbmConstantAlphaAndColor, OwnerListview.Selection.BlendAlphaTextRect,
         ColorToRGB(AlphaColor));
@@ -30498,7 +30498,7 @@ end;
 constructor TEasyInsertMark.Create;
 begin
   inherited Create;
-  FColor := clBlack;
+  FColor := clGrayText;
   FWidth := 2;
   FAutoMove := True;
   FReSelectAfterMove := True;

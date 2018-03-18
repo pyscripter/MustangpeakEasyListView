@@ -28500,6 +28500,7 @@ end;
 destructor TEasyIncrementalSearchManager.Destroy;
 begin
   EndTimer;
+  TimerStub := nil;
   inherited
 end;
 
@@ -28530,7 +28531,6 @@ begin
     begin
       hTimer := 0;
       Exclude(FState, eissTimerRunning);
-      TimerStub := nil;
     end else
       Exception.Create('Can not Destroy Incremental Search Timer');
   end
@@ -28877,7 +28877,8 @@ procedure TEasyIncrementalSearchManager.StartTimer;
 begin
   if Enabled and not(eissTimerRunning in State) then
   begin
-    TimerStub := TCallbackStub.Create(Self, @TEasyIncrementalSearchManager.TimerProc, 4);
+    if not Assigned(TimerStub) then
+      TimerStub := TCallbackStub.Create(Self, @TEasyIncrementalSearchManager.TimerProc, 4);
     hTimer := SetTimer(0, 0, ResetTime, TimerStub.StubPointer);
     Include(FState, eissTimerRunning);
   end

@@ -31,14 +31,11 @@ unit EasyListview;
 interface
 
 {$B-}
+{.$DEFINE SpTBX}
 
 {.$DEFINE DISABLE_ACCESSIBILITY}
 
-{$I ..\Include\Debug.inc}
-
 {.$DEFINE GXDEBUG}
-{.$DEFINE LOADGXUNIT}
-{.$DEFINE SpTBX}
 {.$DEFINE GXDEBUG_SIZING}
 {.$DEFINE GXDEBUG_HINT}
 
@@ -55,9 +52,6 @@ uses
   Classes,
   Graphics,
   Controls,
-  {$IFDEF LOADGXUNIT}
-  DbugIntf,
-  {$ENDIF LOADGXUNIT}
   Themes,
   UxTheme,
   {$ifndef DISABLE_ACCESSIBILITY}
@@ -14488,41 +14482,7 @@ var
   Keys: TCommonKeyStates;
   P: TPoint;
   Effects: TCommonDropEffect;
-
-  {$IFDEF LOG_VCL_CMDRAG}
-  F: TFileStream;
-  S: string;
-  Buffer: array[0..MAX_PATH] of char;
-  {$ENDIF}
 begin
-
-  {$IFDEF LOG_VCL_CMDRAG}
-  FillChar(Buffer, SizeOf(Buffer), #0);
-  GetModuleFileName(hInstance, Buffer, MAX_PATH);
-  S := ExtractFilePath(Buffer) + 'VCL Drag.log';
-  if not FileExists(S) then
-    F := TFileStream.Create(S, fmCreate or fmShareExclusive)
-  else
-    F := TFileStream.Create(S, fmOpenReadWrite or fmShareExclusive);
-
-  F.Seek(0, soFromEnd);
-
-  case Msg.DragMessage of
-    dmDragEnter:  S := 'dmDragEnter';
-    dmDragLeave:  S := 'dmDragLeave';
-    dmDragMove:   S := 'dmDragMove';
-    dmDragDrop:   S := 'dmDragDrop';
-    dmDragCancel: S := 'dmDragCancel';
-    dmFindTarget: S := 'dmFindTarget';
-  end;
-
-  SendDebug(S);
-  
-  S := S + #13+#10;
-  F.Write(PChar(S)^, Length(S));
-  F.Free;
-  {$ENDIF}
-
   Keys := [];
   Effects := cdeNone;
   case Msg.DragMessage of

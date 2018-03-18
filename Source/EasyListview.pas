@@ -16817,11 +16817,11 @@ begin
           end
         end else
         begin
+          if (Button in Selection.MouseButton) then
+            Selection.ClearAll;
           Group := ClickTestGroup(Pt, KeyState, GroupHitInfo);
           if Assigned(Group) then
             DoGroupClick(Group, KeyState, GroupHitInfo);
-          if (Button in Selection.MouseButton) then
-            Selection.ClearAll
         end
       end
     end

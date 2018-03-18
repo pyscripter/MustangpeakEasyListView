@@ -2,15 +2,11 @@ unit Unit2;
 
 interface
 
-{$I ..\..\..\Source\Compilers.inc}
-
 uses
   SysUtils,
   Classes,
   Contnrs,
- {$IFDEF COMPILER_6_UP}
   Variants,
-  {$ENDIF COMPILER_6_UP}
   EasyListview;
 
 type

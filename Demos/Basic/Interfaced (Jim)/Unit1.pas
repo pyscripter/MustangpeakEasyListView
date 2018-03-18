@@ -2,8 +2,6 @@ unit Unit1;
 
 interface
 
-{$I ..\..\..\Source\Compilers.inc}
-
 uses
   Windows,
   Messages,
@@ -18,13 +16,9 @@ uses
   ExtCtrls,
   ActiveX,
   ComCtrls,
-  {$IFDEF COMPILER_6_UP}
   Variants,
   DateUtils,
-  {$ENDIF COMPILER_6_UP}
-  {$IFDEF COMPILER_7_UP}
   XPMan,
-  {$ENDIF COMPILER_7_UP}
   EasyListview,
   MPCommonUtilities,
   MPCommonObjects;

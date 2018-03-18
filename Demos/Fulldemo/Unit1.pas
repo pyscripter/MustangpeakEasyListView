@@ -5,8 +5,6 @@ interface
 //  DRAG UNSELECT MISSES SOME ITEMS AND DOES NOT UNSELECT THEM
 //  DRAG/SELECTDRAG SCROLL DOES NOT ACCOUNT FOR HEADER
 
-{$I ..\..\Source\Compilers.inc}
-
 uses
   Windows,
   Messages,
@@ -24,7 +22,8 @@ uses
   ActiveX,
   EasyListview,
   MPCommonUtilities,
-  MPCommonObjects, Menus;
+  MPCommonObjects,
+  Menus;
 
 type
   TForm1 = class(TForm)

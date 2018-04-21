@@ -193,6 +193,7 @@ procedure TCustomEasyScrollButton.DoPaintRect(ACanvas: TCanvas; WindowClipRect: 
     var
       uState: Cardinal;
     begin
+      ustate := 0;  // to avoid stupid compiler warning
       if (sbsHovering in State) and not (sbsDown in State) then
       begin
         case Direction of
@@ -233,6 +234,7 @@ var
 begin
     if DrawWithThemes then
     begin
+      uState := 0;
       Part := SBP_ARROWBTN;
       if Enabled then
       begin

@@ -445,7 +445,7 @@ type
       const Item: TEasyItem; Column: Integer;
       ImageKind: TEasyImageKind; var ImageIndex: TCommonImageIndexInteger);
     procedure EasyListview1GroupGetCaption(Sender: TCustomEasyListview;
-      const Group: TEasyGroup; var Caption: WideString);
+      const Group: TEasyGroup; var Caption: string);
     procedure EasyListview1GroupGetImageIndex(Sender: TCustomEasyListview;
       const Group: TEasyGroup; ImageKind: TEasyImageKind;
       var ImageIndex: TCommonImageIndexInteger);
@@ -484,7 +484,7 @@ type
     procedure EditIncrementalSearchResetTimeExit(Sender: TObject);
     procedure CheckBoxIncrementalSearchEnableClick(Sender: TObject);
     procedure EasyListview1IncrementalSearch(Item: TEasyCollectionItem;
-      const SearchBuffer: WideString; var Handled: Boolean; var CompareResult: Integer);
+      const SearchBuffer: string; var Handled: Boolean; var CompareResult: Integer);
     procedure CheckBoxDragDropEnabledClick(Sender: TObject);
     procedure TrackBarSelTextBlendAlphaChange(Sender: TObject);
     procedure EasyListview1GroupHotTrack(Sender: TCustomEasyListview;
@@ -513,7 +513,7 @@ type
     procedure CheckBoxGridLinesClick(Sender: TObject);
     procedure ButtonGridLineColorClick(Sender: TObject);
     procedure EasyListview1ItemGetCaption(Sender: TCustomEasyListview;
-      Item: TEasyItem; Column: Integer; var Caption: WideString);
+      Item: TEasyItem; Column: Integer; var Caption: string);
     procedure CheckBoxSelectionGradientClick(Sender: TObject);
     procedure PanelGradientTopClick(Sender: TObject);
     procedure PanelGradientBottomClick(Sender: TObject);
@@ -546,7 +546,7 @@ type
     procedure EditHeightKeyPress(Sender: TObject; var Key: Char);
     procedure CheckBoxHeaderDropDownArrowClick(Sender: TObject);
     procedure EasyListview1ColumnGetCaption(Sender: TCustomEasyListview;
-      Column: TEasyColumn; Line: Integer; var Caption: WideString);
+      Column: TEasyColumn; Line: Integer; var Caption: string);
     procedure CheckBoxDropDownArrowAlwaysShowClick(Sender: TObject);
     procedure CheckBoxDropDownButtonEnabledClick(Sender: TObject);
     procedure EasyListview1ColumnDropDownButtonClick(
@@ -1549,7 +1549,7 @@ begin
 end;
 
 procedure TForm1.EasyListview1GroupGetCaption(Sender: TCustomEasyListview;
-  const Group: TEasyGroup; var Caption: WideString);
+  const Group: TEasyGroup; var Caption: string);
 begin
   Caption := 'Group: ' + IntToStr(Group.Index)
 end;
@@ -1711,7 +1711,7 @@ begin
 end;
 
 procedure TForm1.EasyListview1IncrementalSearch(Item: TEasyCollectionItem;
-  const SearchBuffer: WideString; var Handled: Boolean; var CompareResult: Integer);
+  const SearchBuffer: string; var Handled: Boolean; var CompareResult: Integer);
 begin
   LabelQuery.Caption := SearchBuffer;
   // Will automatically handle the search if we leave Handled to False
@@ -1892,7 +1892,7 @@ begin
 end;
 
 procedure TForm1.EasyListview1ItemGetCaption(Sender: TCustomEasyListview;
-  Item: TEasyItem; Column: Integer; var Caption: WideString);
+  Item: TEasyItem; Column: Integer; var Caption: string);
 begin
  // Caption := 'Item';  Exit;
   case Column of
@@ -2110,7 +2110,7 @@ begin
 end;
 
 procedure TForm1.EasyListview1ColumnGetCaption(Sender: TCustomEasyListview;
-  Column: TEasyColumn; Line: Integer; var Caption: WideString);
+  Column: TEasyColumn; Line: Integer; var Caption: string);
 begin
   Caption := 'Column: ' + IntToStr(Column.Index)
 end;

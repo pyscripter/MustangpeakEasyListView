@@ -24,7 +24,7 @@ uses
   MPCommonObjects;
 
 const
-  COLUMNSTRINGS: array[0..4] of WideString = (
+  COLUMNSTRINGS: array[0..4] of string = (
     'Name',
     'Address',
     'Phone',
@@ -62,18 +62,18 @@ type
 
   TCustomer = class(TBusinessObject)
   private
-    FName: WideString;
-    FAddress: WideString;
+    FName: string;
+    FAddress: string;
     FLastContact: TDateTime;
-    FPhone: WideString;
+    FPhone: string;
     FRecordID: Integer;
   public
     constructor Create;
     destructor Destroy; override;
 
-    property Address: WideString read FAddress write FAddress;
-    property Name: WideString read FName write FName;
-    property Phone: WideString read FPhone write FPhone;
+    property Address: string read FAddress write FAddress;
+    property Name: string read FName write FName;
+    property Phone: string read FPhone write FPhone;
     property LastContact: TDateTime read FLastContact write FLastContact;
     property RecordID: Integer read FRecordID write FRecordID;
   end;

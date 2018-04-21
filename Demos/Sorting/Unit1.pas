@@ -21,7 +21,7 @@ uses
   ImgList, MPCommonObjects;
 
 const
-  DetailType1Array: array[0..6] of WideString = (
+  DetailType1Array: array[0..6] of string = (
     'Detail 1 Type 1',
     'Detail 1 Type 2',
     'Detail 1 Type 3',
@@ -31,7 +31,7 @@ const
     'Detail 1 Type 7'
   );
 
-  DetailType2Array: array[0..4] of WideString = (
+  DetailType2Array: array[0..4] of string = (
     'Detail 2 Type 1',
     'Detail 2 Type 2',
     'Detail 2 Type 3',

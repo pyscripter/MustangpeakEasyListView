@@ -16,8 +16,8 @@ type
                     IEasyImages,
                     IEasyDetails)
   private
-    FFirstname: WideString;
-    FLastname: WideString;
+    FFirstname: string;
+    FLastname: string;
     FImageIndex: Integer;
     // IUnknown: in this case we don't use reference counting (although we could)
     function _AddRef: Integer; stdcall;
@@ -29,10 +29,10 @@ type
     function GetDetail(Line: Integer): Integer; // IEasyDetails (for the tile view)
     function GetDetailCount: Integer; // IEasyDetails (for the tile view)
   public
-    constructor Create(Firstname, Lastname: WideString; ImageIndex: Integer);
+    constructor Create(Firstname, Lastname: string; ImageIndex: Integer);
     destructor Destroy; override;
-    property Firstname: WideString read FFirstname;
-    property Lastname: WideString read FLastname;
+    property Firstname: string read FFirstname;
+    property Lastname: string read FLastname;
   end;
 
   TEmployees = class
@@ -52,7 +52,7 @@ implementation
 
 { TEmployee }
 
-constructor TEmployee.Create(Firstname, Lastname: WideString;
+constructor TEmployee.Create(Firstname, Lastname: string;
   ImageIndex: Integer);
 begin
   inherited Create;

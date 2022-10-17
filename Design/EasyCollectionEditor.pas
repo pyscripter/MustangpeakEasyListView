@@ -45,8 +45,10 @@ uses
   CommCtrl,
   ImgList,
   ToolWin,
-  ActnList,
-  Menus;
+  ActnList, 
+  Menus, 
+  System.Actions, 
+  System.ImageList;
 
 type
   TFormEasyCollectionEditor = class(TDesignWindow)

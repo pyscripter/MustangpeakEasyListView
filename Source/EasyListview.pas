@@ -429,7 +429,8 @@ type
   TEasyImageSize = (
     eisSmall,                   // Paint Small Images
     eisLarge,                   // Paint Large Images
-    eisExtraLarge               // Paint JumboImages
+    eisExtraLarge,              // Paint ExtraLarge Images
+    eisJumbo                    // Paint Jumbo Images
   );
 
   TEasyImageKind = (
@@ -1338,6 +1339,7 @@ type
     procedure SetSortGlyphIndent(Value: Integer);
     procedure SetStyle(Value: TEasyHeaderButtonStyle);
   protected
+    procedure ChangeScale(M, D: Integer); 
     property Color: TColor read FColor write SetColor default clBtnFace;
     property HilightFocused: Boolean read FHilightFocused write SetHilightFocused default False;
     property HilightFocusedColor: TColor read FHilightFocusedColor write SetHilightFocusedColor default $00F7F7F7;
@@ -2094,7 +2096,7 @@ type
     function GetStateImageList(Column: TEasyColumn; Item: TEasyItem): TCustomImageList; virtual;
     function ItemRect(Item: TEasyItem; Column: TEasyColumn; RectType: TEasyCellRectType): TRect; virtual;
     procedure ItemRectArray(Item: TEasyItem; Column: TEasyColumn; ACanvas: TCanvas; const Caption: string; var RectArray: TEasyRectArrayObject); virtual;
-    procedure LoadTextFont(Item: TEasyItem; Position: Integer; ACanvas: TCanvas; Hilightable: Boolean); virtual;
+    procedure LoadTextFont(Item: TEasyItem; ACanvas: TCanvas; Hilightable: Boolean); virtual;
     function OverlappedFocus: Boolean; virtual;
     procedure Paint(Item: TEasyItem; Column: TEasyColumn; ACanvas: TCanvas; ViewportClipRect: TRect; ForceSelectionRectDraw: Boolean); virtual;
     procedure PaintAfter(Item: TEasyItem; Column: TEasyColumn; const Caption: string; ACanvas: TCanvas; RectArray: TEasyRectArrayObject); virtual;
@@ -2172,7 +2174,7 @@ type
     function SelectionHitPt(Item: TEasyItem; ViewportPoint: TPoint; SelectType: TEasySelectHitType): Boolean; override;
   end;
 
-    // **************************************************************************
+  // **************************************************************************
   // TEasyViewReportThumbItem
   //    Basis for the UI (drawing, and mouse interaction) for a TEasyItem
   // **************************************************************************
@@ -2321,16 +2323,15 @@ type
   //   Manages images and bitmaps that are used in the EasyControl such as
   // expand "+" buttons, etc.
   // **************************************************************************
+
+  // TODO:  The problem with these images is that their color cannot be styled
+  //   Replace with drawing.
   TEasyGlobalImageManager = class(TEasyOwnedPersistent)
   private
     FGroupExpandButton: TBitmap;
     FGroupCollapseButton: TBitmap;
     FColumnSortUp: TBitmap;
     FColumnSortDown: TBitmap;
-    function GetColumnSortDown: TBitmap;
-    function GetColumnSortUp: TBitmap;
-    function GetGroupCollapseImage: TBitmap;
-    function GetGroupExpandImage: TBitmap;
     procedure SetColumnSortDown(Value: TBitmap);
     procedure SetColumnSortUp(Value: TBitmap);
     procedure SetGroupCollapseImage(const Value: TBitmap);
@@ -2340,11 +2341,13 @@ type
   public
     constructor Create(AnOwner: TCustomEasyListview); override;
     destructor Destroy; override;
+    procedure ChangeScale(M, D: Integer);
+    procedure ScaleBitmap(ABitmap: TBitmap; const M, D: Integer);
   published
-    property GroupExpandButton: TBitmap read GetGroupExpandImage write SetGroupExpandImage;
-    property GroupCollapseButton: TBitmap read GetGroupCollapseImage write SetGroupCollapseImage;
-    property ColumnSortUp: TBitmap read GetColumnSortUp write SetColumnSortUp;
-    property ColumnSortDown: TBitmap read GetColumnSortDown write SetColumnSortDown;
+    property GroupExpandButton: TBitmap read FGroupExpandButton write SetGroupExpandImage;
+    property GroupCollapseButton: TBitmap read FGroupCollapseButton write SetGroupCollapseImage;
+    property ColumnSortUp: TBitmap read FColumnSortUp write SetColumnSortUp;
+    property ColumnSortDown: TBitmap read FColumnSortDown write SetColumnSortDown;
   end;
 
   // **************************************************************************
@@ -3022,12 +3025,13 @@ type
     procedure SetHeight(Value: Integer);
     procedure SetWidth(Value: Integer);
   protected
+    procedure ChangeScale(M, D: Integer); 
     property AutoSizeCaption: Boolean read FAutoSizeCaption write SetAutoSizeCaption default False;
   public
     constructor Create(AnOwner: TCustomEasyListview); override;
 
     procedure Assign(Source: TPersistent); override;
-    procedure RestoreDefaults; virtual;
+    procedure RestoreDefaults(PPI: Integer); virtual;
     procedure SetRawAutoSize(AWidth, AHeight: Integer);  // Sets the Raw Size Values
     procedure SetRawSize(AWidth, AHeight: Integer);      // Sets the Raw Auto Size Values
     procedure SetSize(AWidth, AHeight: Integer);         // Sets the values based on if AutoSizeCaption is set or not
@@ -3036,7 +3040,6 @@ type
     property WidthRaw: Integer read GetWidthRaw;
     property WidthAutoSizeRaw: Integer read FWidthAutoSizeRaw;
   published
-
     property Height: Integer read GetHeight write SetHeight default DEFAULT_HEIGHT_ICON;
     property Width: Integer read GetWidth write SetWidth default DEFAULT_WIDTH_ICON;
   end;
@@ -3053,10 +3056,9 @@ type
   //   Maintains the default sizes for the Cells a Small Icon view
   // **************************************************************************
   TEasyCellSizeSmallIcon = class(TEasyCellSize)
-  protected
   public
     constructor Create(AnOwner: TCustomEasyListview); override;
-    procedure RestoreDefaults; override;
+    procedure RestoreDefaults(PPI: Integer); override;
   published
     property AutoSizeCaption;
     property Width default DEFAULT_WIDTH_SMALLICON;
@@ -3068,10 +3070,9 @@ type
   //   Maintains the default sizes for the Cells a Thumbnail view
   // **************************************************************************
   TEasyCellSizeThumbnail = class(TEasyCellSize)
-  protected
   public
     constructor Create(AnOwner: TCustomEasyListview); override;
-    procedure RestoreDefaults; override;
+    procedure RestoreDefaults(PPI: Integer); override;
   published
     property Width default DEFAULT_WIDTH_THUMBNAIL;
     property Height default DEFAULT_HEIGHT_THUMBNAIL;
@@ -3082,10 +3083,9 @@ type
   //   Maintains the default sizes for the Cells a Tile view
   // **************************************************************************
   TEasyCellSizeTile = class(TEasyCellSize)
-  protected
   public
     constructor Create(AnOwner: TCustomEasyListview); override;
-    procedure RestoreDefaults; override;
+    procedure RestoreDefaults(PPI: Integer); override;
   published
     property Width default DEFAULT_WIDTH_TILE;
     property Height default DEFAULT_HEIGHT_TILE;
@@ -3096,10 +3096,9 @@ type
   //   Maintains the default sizes for the Cells a List view
   // **************************************************************************
   TEasyCellSizeList = class(TEasyCellSize)
-  protected
   public
     constructor Create(AnOwner: TCustomEasyListview); override;
-    procedure RestoreDefaults; override;
+    procedure RestoreDefaults(PPI: Integer); override;
   published
     property AutoSizeCaption;
     property Width default DEFAULT_WIDTH_LIST;
@@ -3111,10 +3110,9 @@ type
   //   Maintains the default sizes for the Cells a Report view
   // **************************************************************************
   TEasyCellSizeReport = class(TEasyCellSize)
-  protected
   public
     constructor Create(AnOwner: TCustomEasyListview); override;
-    procedure RestoreDefaults; override;
+    procedure RestoreDefaults(PPI: Integer); override;
   published
     property AutoSizeCaption;
     property Width default DEFAULT_WIDTH_REPORT;
@@ -3124,7 +3122,7 @@ type
   TEasyCellSizeReportThumb = class(TEasyCellSize)
   public
     constructor Create(AnOwner: TCustomEasyListview); override;
-    procedure RestoreDefaults; override;
+    procedure RestoreDefaults(PPI: Integer); override;
   published
     property AutoSizeCaption;
     property Width default DEFAULT_WIDTH_REPORTTHUMB;
@@ -3161,10 +3159,11 @@ type
     FGrid: TEasyCellGrid;
     FThumbnail: TEasyCellSizeThumbnail;
     FTile: TEasyCellSizeTile;
+  protected
+    procedure ChangeScale(M, D: Integer);
   public
     constructor Create(AnOwner: TCustomEasyListview); override;
     destructor Destroy; override;
-
   published
     property FilmStrip: TEasyCellSizeFilmStrip read FFilmStrip write FFilmStrip;
     property Icon: TEasyCellSizeIcon read FIcon write FIcon;
@@ -3261,6 +3260,7 @@ type
     function CanChangeHotTracking(NewValue: Boolean): Boolean; override;
     function CanChangeSelection(NewValue: Boolean): Boolean; override;
     function CanChangeVisibility(NewValue: Boolean): Boolean; override;
+    procedure ChangeScale(M, D: Integer);
     function DefaultImageList(ImageSize: TEasyImageSize): TCustomImageList; override;
     function GetDefaultViewClass: TEasyViewColumnClass; virtual;
     function LocalPaintInfo: TEasyPaintInfoBasic; override;
@@ -3463,6 +3463,7 @@ type
     function GetOwnerHeader: TEasyHeader;
     procedure SetColumns(Index: Integer; Value: TEasyColumn);
   protected
+    procedure ChangeScale(M, D: Integer);
     procedure DoItemAdd(Item: TEasyCollectionItem; Index: Integer); override;
     procedure DoStructureChange; override;
   public
@@ -3541,6 +3542,7 @@ type
     procedure SetVisible(Value: Boolean);
     function GetViewWidth: Integer;
   protected
+    procedure ChangeScale(M, D: Integer);
     function InCheckZone(ViewportPt: TPoint; var Column: TEasyColumn): Boolean;
     function InDropDownButtonZone(ViewportPt: TPoint; var Column: TEasyColumn): Boolean;
     function InHotTrackZone(ViewportPt: TPoint; var Column: TEasyColumn): Boolean;
@@ -3556,7 +3558,7 @@ type
     procedure ReleaseMouse;
     procedure SizeFixedSingleColumn(NewWidth: Integer);
     procedure SpringColumns(NewWidth: Integer);
-    procedure WMContextMenu(var Msg: TMessage); message WM_CONTEXTMENU;
+    procedure WMContextMenu(var AMsg: TWMContextMenu); message WM_CONTEXTMENU;
     procedure WMLButtonDblClk(var Msg: TWMLButtonDblClk); message WM_LBUTTONDBLCLK;
     procedure WMLButtonDown(var Msg: TWMLButtonDown); message WM_LBUTTONDOWN;
     procedure WMLButtonUp(var Msg: TWMLButtonUp); message WM_LBUTTONUP;
@@ -4680,6 +4682,7 @@ type
     FHotTrack: TEasyHotTrackManager;
     FImagesExLarge: TCustomImageList;
     FImagesGroup: TCustomImageList;
+    FImagesJumbo: TCustomImageList;
     FImagesLarge: TCustomImageList;
     FImagesSmall: TCustomImageList;
     FImagesState: TCustomImageList;
@@ -4871,6 +4874,7 @@ type
     function GetPaintInfoItem: TEasyPaintInfoBaseItem; virtual;
     function GetScratchCanvas: TControlCanvas;
     function GetTopItem: TEasyItem;
+    procedure InternalKeyDown(var AMsg: TWMKey);
     procedure SetBackGround(const Value: TEasyBackgroundManager);
     procedure SetGroupCollapseImage(Value: TBitmap);
     procedure SetGroupExpandImage(Value: TBitmap);
@@ -4878,6 +4882,7 @@ type
     procedure SetHintType(Value: TEasyHintType);
     procedure SetImagesExLarge(Value: TCustomImageList);
     procedure SetImagesGroup(Value: TCustomImageList);
+    procedure SetImagesJumbo(AValue: TCustomImageList);
     procedure SetImagesLarge(Value: TCustomImageList);
     procedure SetImagesSmall(Value: TCustomImageList);
     procedure SetImagesState(const Value: TCustomImageList);
@@ -4889,6 +4894,7 @@ type
     procedure SetShowInactive(const Value: Boolean);
     procedure SetShowGroupMargins(const Value: Boolean);
   protected
+    procedure ChangeScale(M, D: Integer; IsDpiChange: Boolean); override;
     function CreateColumnPaintInfo: TEasyPaintInfoBaseColumn; virtual;
     function CreateGroupPaintInfo: TEasyPaintInfoBaseGroup; virtual;
     function CreateGroups: TEasyGroups; virtual;
@@ -5111,14 +5117,15 @@ type
     {$ENDIF}
     procedure WMChar(var Msg: TWMChar); message WM_CHAR;
     procedure WMClose(var Msg: TWMClose); message WM_CLOSE;
-    procedure WMContextMenu(var Msg: TMessage); message WM_CONTEXTMENU;
+    procedure WMContextMenu(var AMsg: TWMContextMenu); message WM_CONTEXTMENU;
     procedure WMDestroy(var Msg: TMessage); message WM_DESTROY;
     procedure WMEasyThreadCallback(var Msg: TWMThreadRequest); message WM_COMMONTHREADCALLBACK;
     procedure WMEraseBkGnd(var Msg: TWMEraseBkGnd); message WM_ERASEBKGND;
     procedure WMGetDlgCode(var Msg: TWMGetDlgCode); message WM_GETDLGCODE;
     {$ifndef DISABLE_ACCESSIBILITY}procedure WMGetObject(var Msg: TMessage); message WM_GETOBJECT;{$endif}
     procedure WMHScroll(var Msg: TWMHScroll); message WM_HSCROLL;
-    procedure WMKeyDown(var Msg: TWMKeyDown); message WM_KEYDOWN;
+    procedure WMKeyDown(var AMsg: TWMKeyDown); message WM_KEYDOWN;
+    procedure WMSysKeyDown(var AMsg: TWMSysKeyDown); message WM_SYSKEYDOWN;
     procedure WMKillFocus(var Msg: TWMKillFocus); message WM_KILLFOCUS;
     procedure WMLButtonDblClk(var Msg: TWMLButtonDblClk); message WM_LBUTTONDBLCLK;
     procedure WMLButtonDown(var Msg: TWMLButtonDown); message WM_LBUTTONDOWN;
@@ -5170,6 +5177,7 @@ type
     property ImagesSmall: TCustomImageList read FImagesSmall write SetImagesSmall;
     property ImagesLarge: TCustomImageList read FImagesLarge write SetImagesLarge;
     property ImagesExLarge: TCustomImageList read FImagesExLarge write SetImagesExLarge;
+    property ImagesJumbo: TCustomImageList read FImagesJumbo write SetImagesJumbo;
     property ImagesState: TCustomImageList read FImagesState write SetImagesState;
     property IncrementalSearch: TEasyIncrementalSearchManager read FIncrementalSearch write FIncrementalSearch;
     property Items: TEasyGlobalItems read FItems;
@@ -6022,8 +6030,6 @@ type
     property OnUnDock;
   end;
 
-
-
 const
   EASYLISTSTYLETEXTS: array[TEasyListStyle] of string =
     ('Icon', 'Small Icon', 'List', 'Details', 'Thumbnail', 'Tile', 'DetailThumbs',  'FilmStrip', 'Grid');
@@ -6048,7 +6054,7 @@ implementation
 
 uses
   {$ifndef DISABLE_ACCESSIBILITY}EasyListviewAccessible,{$endif}
-  System.UITypes, System.Math;
+  System.UITypes, System.Math, Vcl.GraphUtil;
 
 const
   PERSISTENTOBJECTSTATES = [esosSelected, esosEnabled, esosVisible, esosChecked, esosBold]; // States that are stored to a stream for persistance
@@ -6203,13 +6209,13 @@ begin
     Strings.Add(EASYSORTALGORITHMS[ListStyle]);
 end;
 
-function WideFileCreate(const FileName: string): Integer;
+function WideFileCreate(const FileName: string): THandle;
 begin
-  Result := Integer(CreateFileW(PWideChar(FileName), GENERIC_READ or GENERIC_WRITE, 0,
-    nil, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0));
+  Result := CreateFileW(PWideChar(FileName), GENERIC_READ or GENERIC_WRITE, 0,
+    nil, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 end;
 
-function WideFileOpen(const FileName: string; Mode: LongWord): Integer;
+function WideFileOpen(const FileName: string; Mode: LongWord): THandle;
 const
   AccessMode: array[0..2] of LongWord = (
     GENERIC_READ,
@@ -6222,25 +6228,25 @@ const
     FILE_SHARE_WRITE,
     FILE_SHARE_READ or FILE_SHARE_WRITE);
 begin
-  Result := Integer(CreateFileW(PWideChar(FileName), AccessMode[Mode and 3], ShareMode[(Mode and $F0) shr 4],
-    nil, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0));
+  Result := CreateFileW(PWideChar(FileName), AccessMode[Mode and 3], ShareMode[(Mode and $F0) shr 4],
+    nil, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 end;
 
 { TWideFileStream }
 
 constructor TWideFileStream.Create(const FileName: string; Mode: Word);
 var
-  CreateHandle: Integer;
+  CreateHandle: THandle;
 begin
   if Mode = fmCreate then
   begin
     CreateHandle := WideFileCreate(FileName);
-    if CreateHandle < 0 then
+    if CreateHandle = 0 then
      raise EFCreateError.CreateResFmt(PResStringRec(@SFCreateError), [FileName]);
   end else
   begin
     CreateHandle := WideFileOpen(FileName, Mode);
-    if CreateHandle < 0 then
+    if CreateHandle = 0 then
      raise EFCreateError.CreateResFmt(PResStringRec(@SFCreateError), [FileName]);
   end;
   inherited Create(CreateHandle);
@@ -8202,6 +8208,14 @@ begin
   DoStructureChange
 end;
 
+procedure TEasyColumns.ChangeScale(M, D: Integer);
+var
+  lCount: Integer;
+begin
+  for lCount := 0 to Count - 1 do
+    Columns[lCount].ChangeScale(M, D);
+end;
+
 procedure TEasyColumns.Clear(FreeItems: Boolean = True);
 begin
   inherited Clear(FreeItems);
@@ -8236,13 +8250,33 @@ end;
 
 { TEasyGlobalImageManager }
 
+procedure TEasyGlobalImageManager.ChangeScale(M, D: Integer);
+begin
+  ScaleBitmap(FGroupExpandButton, M, D);
+  ScaleBitmap(FGroupCollapseButton, M, D);
+  ScaleBitmap(FColumnSortUp, M, D);
+  ScaleBitmap(FColumnSortDown, M, D);
+end;
+
 constructor TEasyGlobalImageManager.Create(AnOwner: TCustomEasyListview);
+// Load the bitmaps here so that they will be scaled when the form is shown
 begin
   inherited;
   FGroupExpandButton := TBitmap.Create;
+  MakeTransparent(FGroupExpandButton, clFuchsia);
+  FGroupExpandButton.LoadFromResourceName(hInstance, BITMAP_DEFAULTGROUPEXPANDED);
+
   FGroupCollapseButton := TBitmap.Create;
+  MakeTransparent(FGroupCollapseButton, clFuchsia);
+  FGroupCollapseButton.LoadFromResourceName(hInstance, BITMAP_DEFAULTGROUPCOLLAPSED);
+
   FColumnSortUp := TBitmap.Create;
+  MakeTransparent(FColumnSortUp, clFuchsia);
+  FColumnSortUp.LoadFromResourceName(hInstance, BITMAP_SORTARROWUP);
+
   FColumnSortDown := TBitmap.Create;
+  MakeTransparent(FColumnSortDown, clFuchsia);
+  FColumnSortDown.LoadFromResourceName(hInstance, BITMAP_SORTARROWDOWN);
 end;
 
 destructor TEasyGlobalImageManager.Destroy;
@@ -8254,50 +8288,26 @@ begin
   FreeAndNil(FColumnSortDown);
 end;
 
-function TEasyGlobalImageManager.GetColumnSortDown: TBitmap;
-begin
-  if FColumnSortDown.Empty then
-  begin
-    MakeTransparent(FColumnSortDown, clFuchsia);
-    FColumnSortDown.LoadFromResourceName(hInstance, BITMAP_SORTARROWDOWN);
-  end;
-  Result := FColumnSortDown
-end;
-
-function TEasyGlobalImageManager.GetColumnSortUp: TBitmap;
-begin
-  if FColumnSortUp.Empty then
-  begin
-    MakeTransparent(FColumnSortUp, clFuchsia);
-    FColumnSortUp.LoadFromResourceName(hInstance, BITMAP_SORTARROWUP);
-  end;
-  Result := FColumnSortUp
-end;
-
-function TEasyGlobalImageManager.GetGroupCollapseImage: TBitmap;
-begin
-  if FGroupCollapseButton.Empty then
-  begin
-    MakeTransparent(FGroupCollapseButton, clFuchsia);
-    FGroupCollapseButton.LoadFromResourceName(hInstance, BITMAP_DEFAULTGROUPCOLLAPSED);
-  end;
-  Result := FGroupCollapseButton
-end;
-
-function TEasyGlobalImageManager.GetGroupExpandImage: TBitmap;
-begin
-  if FGroupExpandButton.Empty then
-  begin
-    MakeTransparent(FGroupExpandButton, clFuchsia);
-    FGroupExpandButton.LoadFromResourceName(hInstance, BITMAP_DEFAULTGROUPEXPANDED);
-  end;
-  Result := FGroupExpandButton
-end;
-
 procedure TEasyGlobalImageManager.MakeTransparent(Bits: TBitmap; TransparentColor: TColor);
 begin
   Bits.Transparent := True;
-  Bits.TransparentColor := TransparentColor
+  Bits.TransparentColor := TransparentColor;
+end;
+
+procedure TEasyGlobalImageManager.ScaleBitmap(ABitmap: TBitmap; const M, D: Integer);
+var
+  B: TBitmap;
+begin
+  B := TBitmap.Create;
+  try
+    B.SetSize(MulDiv(ABitmap.Width, M, D), MulDiv(ABitmap.Height, M, D));
+    SetStretchBltMode(B.Canvas.Handle, STRETCH_HALFTONE);
+    B.Canvas.StretchDraw(Rect(0, 0, B.Width, B.Height), ABitmap);
+    ABitmap.Assign(B);
+  finally
+    B.Free;
+  end;
+
 end;
 
 procedure TEasyGlobalImageManager.SetColumnSortDown(Value: TBitmap);
@@ -8447,7 +8457,7 @@ end;
 
 function TEasyGroup.DefaultImageList(ImageSize: TEasyImageSize): TCustomImageList;
 begin
-  Result:= OwnerListview.ImagesGroup
+  Result := OwnerListview.ImagesGroup;
 end;
 
 function TEasyGroup.EditAreaHitPt(ViewportPoint: TPoint): Boolean;
@@ -9887,9 +9897,14 @@ begin
   OwnerListview.DoColumnVisibilityChanging(Self, Result)
 end;
 
+procedure TEasyColumn.ChangeScale(M, D: Integer);
+begin
+  FWidth := MulDiv(FWidth, M, D);
+end;
+
 function TEasyColumn.DefaultImageList(ImageSize: TEasyImageSize): TCustomImageList;
 begin
-  Result := OwnerListview.Header.Images
+  Result := OwnerListview.Header.Images;
 end;
 
 function TEasyColumn.EditAreaHitPt(ViewportPoint: TPoint): Boolean;
@@ -10019,7 +10034,7 @@ begin
     begin
       Group := OwnerListview.Groups[i];
       Item := Group.Items[j];
-      Item.View.LoadTextFont(Item, iIndex, Canvas, False);
+      Item.View.LoadTextFont(Item, Canvas, False);
       OwnerListview.DoItemPaintText(Item, Index, Canvas);
       Caption := Item.Captions[iIndex];
       Size := TextExtentW(Caption, Canvas);
@@ -13994,7 +14009,14 @@ begin
   SkinManager.RemoveSkinNotification(Self);
   {$ENDIF SpTBX}
   inherited Destroy;
-  DropTarget := nil;
+  //TODO: Find and solve the issue behind
+  if Assigned(DropTarget) then
+  begin
+    //Do it the hard way
+    DropTarget._AddRef;
+    while DropTarget._Release > 1 do;
+    DropTarget := nil;
+  end;
   // Don't destroy these objects until the Window is destroyed
   GroupExpandButton.Canvas.Unlock;
   GroupCollapseButton.Canvas.Unlock;
@@ -14059,6 +14081,19 @@ begin
   Result := ClientRect;
   Result.Top := Result.Top + Header.RuntimeHeight;
   Result := Scrollbars.MapWindowRectToViewRect(Result)
+end;
+
+procedure TCustomEasyListview.ChangeScale(M, D: Integer; IsDpiChange: Boolean);
+begin
+  inherited ChangeScale(M, D, IsDpiChange);
+  if IsDpiChange and (M <> D) then
+  begin
+    FHeader.ChangeScale(M, D);
+    FCellSizes.ChangeScale(M, D);
+    FPaintInfoColumn.ChangeScale(M, D);
+    //TODO:  PPIScale  FPaintInfoGroup.ChangeScale(M, D);
+    FGlobalImages.ChangeScale(M, D);
+  end;
 end;
 
 function TCustomEasyListview.CreateColumnPaintInfo: TEasyPaintInfoBaseColumn;
@@ -14297,7 +14332,7 @@ begin
 
       R := RectArray.LabelRect;
       LineCount := Item.View.PaintTextLineCount(Item, nil);
-      Item.View.LoadTextFont(Item, 0, Canvas, False);
+      Item.View.LoadTextFont(Item, Canvas, False);
       DrawTextWEx(Canvas.Handle, Item.Caption, R, TextFlags, LineCount);
 
 
@@ -14389,8 +14424,11 @@ end;
 
 procedure TCustomEasyListview.CalcThemedNCSize(var ContextRect: TRect);
 begin
-  if Succeeded(GetThemeBackgroundContentRect(Themes.ListviewTheme, Canvas.Handle, LVP_EMPTYTEXT, LIS_NORMAL, ContextRect, @ContextRect)) then
-    InflateRect(ContextRect, -(BorderWidth), -(BorderWidth));
+  if not StyleServices(Self).Enabled then
+  begin
+    if Succeeded(GetThemeBackgroundContentRect(Themes.ListviewTheme, Canvas.Handle, LVP_EMPTYTEXT, LIS_NORMAL, ContextRect, @ContextRect)) then
+      InflateRect(ContextRect, -BorderWidth, -BorderWidth);
+  end;
 end;
 
 procedure TCustomEasyListview.CancelCut;
@@ -16858,6 +16896,27 @@ begin
   end;
 end;
 
+procedure TCustomEasyListview.InternalKeyDown(var AMsg: TWMKey);
+// Called when the user pressed a key on the keyboard.  The Scrollbars need to
+// know in case the user is scrolling using the keys.
+var
+  lDoDefault: Boolean;
+  lShift: TShiftState;
+begin
+  if ebcsDragSelecting in States then
+    DragRect.WMKeyDown(AMsg)
+  else
+  begin
+    IncrementalSearch.HandleWMKeyDown(AMsg);
+
+    lShift := KeyDataToShiftState(AMsg.KeyData);
+    lDoDefault := True;
+    DoKeyAction(AMsg.CharCode, lShift, lDoDefault);
+    if lDoDefault then
+      HandleKeyDown(AMsg);
+  end;
+end;
+
 function TCustomEasyListview.IsGrouped: Boolean;
 begin
   // Default definition that the control is in grouped mode is if the Top Margin is enabled
@@ -16932,6 +16991,8 @@ begin
       FImagesGroup := nil;
     if AComponent = FImagesExLarge then
       FImagesExLarge := nil;
+    if AComponent = FImagesJumbo then
+      FImagesJumbo := nil;
     if AComponent = FImagesLarge then
       FImagesLarge := nil;
     if AComponent = FImagesSmall then
@@ -17032,6 +17093,15 @@ begin
   if Value <> FImagesGroup then
   begin
     FImagesGroup := Value;
+    SafeInvalidateRect(nil, False);
+  end
+end;
+
+procedure TCustomEasyListview.SetImagesJumbo(AValue: TCustomImageList);
+begin
+  if AValue <> FImagesJumbo then
+  begin
+    FImagesJumbo := AValue;
     SafeInvalidateRect(nil, False);
   end
 end;
@@ -17171,7 +17241,7 @@ begin
   inherited;
 end;
 
-procedure TCustomEasyListview.WMContextMenu(var Msg: TMessage);
+procedure TCustomEasyListview.WMContextMenu(var AMsg: TWMContextMenu);
 var
   Item: TEasyItem;
   Group: TEasyGroup;
@@ -17185,11 +17255,12 @@ begin
   begin
     Handled := False;
     MenuKey := False;
+    Menu := nil;
     if not (ebcsCancelContextMenu in States) then
     begin
       SkipHitTest := False;
       // Support Dual monitors with SmallPointToPoint
-      Pt:= SmallPointToPoint(SmallPoint(Msg.LParamLo, Msg.LParamHi));
+      Pt:= SmallPointToPoint(AMsg.Pos);
       if ((Pt.X = 65535) and (Pt.Y = 65535)) or ((Pt.X = -1) and (Pt.Y = -1)) then
       begin
         MenuKey := True;
@@ -17212,15 +17283,16 @@ begin
         HitInfoItem.Group := HitInfoItem.Item.OwnerGroup;
         HitInfoItem.HitInfo := [ehtOnLabel, ehtOnIcon];
         DoItemContextMenu(HitInfoItem, Pt, Menu, Handled)
-      end else
-      if not SkipHitTest then
+      end
+      else if not SkipHitTest then
       begin
-        if IsHeaderMouseMsg(PointToSmallPoint( ScreenToClient(Pt))) then
+        if IsHeaderMouseMsg(PointToSmallPoint(ScreenToClient(Pt))) then
         begin
           Pt := ClientToScreen(Pt);
-          Header.WMContextMenu(Msg);
+          Header.WMContextMenu(AMsg);
           Handled := True;
-        end else
+        end
+        else
         begin
           Menu := nil;
           Exclude(FStates, ebcsDragSelectPending);
@@ -17230,7 +17302,7 @@ begin
           Group := Groups.GroupByPoint(Scrollbars.MapWindowToView(ScreenToClient(Pt)));
           if Assigned(Group) then
           begin
-            // The hit was in a group so now see if it was in an item
+            // The hit was in a Group so now see if it was in an Item
             Item := Group.ItembyPoint(Scrollbars.MapWindowToView( ScreenToClient(Pt)));
             if Assigned(Item) then
             begin
@@ -17256,15 +17328,16 @@ begin
 
       if Assigned(Menu) and not Handled then
       begin
-        Menu.Popup(Msg.LParamLo, Msg.LParamHi);
-        Msg.Result := 1
-      end else
-      if not Handled then
+        Menu.Popup(AMsg.Pos.x, AMsg.Pos.y);
+        AMsg.Result := 1
+      end
+      else if not Handled then
         inherited  // Use the PopupMenu property from TControl
     end;
-  end else
+  end
+  else
   begin
-    Msg.Result := 1;
+    AMsg.Result := 1;
     inherited
   end;
   Exclude(FStates, ebcsCancelContextMenu);
@@ -17340,27 +17413,16 @@ begin
   SafeInvalidateRect(nil, False);
 end;
 
-procedure TCustomEasyListview.WMKeyDown(var Msg: TWMKeyDown);
-// Called when the user pressed a key on the keyboard.  The Scrollbars need to
-// know in case the user is scrolling using the keys.
-var
-  Shift: TShiftState;
-  DoDefault: Boolean;
+procedure TCustomEasyListview.WMKeyDown(var AMsg: TWMKeyDown);
 begin
   inherited;
-  if (ebcsDragSelecting in States) then
-  begin
-    DragRect.WMKeyDown(Msg);
-  end else
-  begin
-    IncrementalSearch.HandleWMKeyDown(Msg);
+  InternalKeyDown(AMsg);
+end;
 
-    Shift := KeyDataToShiftState(Msg.KeyData);
-    DoDefault := True;
-    DoKeyAction(Msg.CharCode, Shift, DoDefault);
-    if DoDefault then
-      HandleKeyDown(Msg);
-  end;
+procedure TCustomEasyListview.WMSysKeyDown(var AMsg: TWMSysKeyDown);
+begin
+  inherited;
+  InternalKeyDown(AMsg);
 end;
 
 procedure TCustomEasyListview.WMKillFocus(var Msg: TWMKillFocus);
@@ -17988,9 +18050,11 @@ end;
 function TEasyCollectionItem.DefaultImageList(ImageSize: TEasyImageSize): TCustomImageList;
 begin
   case ImageSize of
-   eisSmall: Result := OwnerListview.ImagesSmall;
-   eisLarge: Result := OwnerListview.ImagesLarge;
-   {eisExtraLarge:} else Result := OwnerListview.ImagesExLarge;
+    eisSmall: Result := OwnerListview.ImagesSmall;
+    eisLarge: Result := OwnerListview.ImagesLarge;
+    eisExtraLarge: Result := OwnerListview.ImagesExLarge;
+  else
+    Result := OwnerListview.ImagesJumbo;
   end
 end;
 
@@ -19069,6 +19133,12 @@ begin
   FreeAndNil(FDragManager);
 end;
 
+procedure TEasyHeader.ChangeScale(M, D: Integer);
+begin
+  FHeight := MulDiv(FHeight, M, D);
+  FColumns.ChangeScale(M, D);
+end;
+
 function TEasyHeader.FirstColumn: TEasyColumn;
 begin
   if Columns.Count > 0 then
@@ -19602,8 +19672,10 @@ procedure TEasyHeader.PaintTo(ACanvas: TCanvas; ARect: TRect; ViewRectCoords: Bo
 var
   Column: TEasyColumn;
   Handled: Boolean;
-  PartID,
-  StateID: LongWord;
+  PartID: Integer;
+  StateID: Integer;
+  LStyle: TCustomStyleServices;
+  Details: TThemedElementDetails;
 begin
   Handled := False;
   CanvasStore.StoreCanvasState(ACanvas);
@@ -19611,19 +19683,30 @@ begin
   CanvasStore.RestoreCanvasState(ACanvas);
   if not Handled then
   begin
+    LStyle := StyleServices;
     {$IFDEF SpTBX}
     if SkinManager.GetSkinType in [sknSkin, sknDelphiStyle] then
     begin
       // Paints the rightmost background of the columns, the part that never gets selected
       SpDrawXPHeader(ACanvas, ViewRect, False, False);
-    end else
+    end
+    else
     {$ENDIF SpTBX}
     if OwnerListview.DrawWithThemes then
     begin
-      PartID := HP_HEADERITEM;
-      StateID := HIS_NORMAL;
-      DrawThemeBackground(OwnerListview.Themes.HeaderTheme, ACanvas.Handle, PartID, StateID, ViewRect, nil);
-    end else
+      if LStyle.Enabled then
+      begin
+        Details := LStyle.GetElementDetails(TThemedHeader.thHeaderItemNormal);
+        LStyle.DrawElement(ACanvas.Handle, Details, ViewRect, nil, OwnerListview.CurrentPPI);
+      end
+      else
+      begin
+        PartID := HP_HEADERITEM;
+        StateID := HIS_NORMAL;
+        DrawThemeBackground(OwnerListview.Themes.HeaderTheme, ACanvas.Handle, PartID, StateID, ViewRect, nil);
+      end;
+    end
+    else
     begin
       ACanvas.Brush.Color := Color;
       ACanvas.FillRect(DisplayRect);
@@ -19805,7 +19888,7 @@ begin
   end;
 end;
 
-procedure TEasyHeader.WMContextMenu(var Msg: TMessage);
+procedure TEasyHeader.WMContextMenu(var AMsg: TWMContextMenu);
 var
   Column: TEasyColumn;
   ViewPt, Pt: TPoint;
@@ -19813,7 +19896,7 @@ var
   Menu: TPopupMenu;
 begin
   Menu := OwnerListview.PopupMenuHeader;
-  Pt := OwnerListview.ScreenToClient(Point( Msg.LParamLo, Msg.LParamHi));
+  Pt := OwnerListview.ScreenToClient(SmallPointToPoint(AMsg.Pos));
   if OwnerListview.ScrollHeaderHorz then
     ViewPt := OwnerListview.Scrollbars.MapWindowToView(Pt, False);
   HitInfoColumn.Column := Columns.ColumnByPoint(ViewPt);
@@ -19826,9 +19909,10 @@ begin
   OwnerListview.DoColumnContextMenu(HitInfoColumn, Pt, Menu);
   if Assigned(Menu) then
   begin
-    Menu.Popup(Msg.LParamLo, Msg.LParamHi);
-    Msg.Result := 1
-  end else
+    Menu.Popup(AMsg.Pos.x, AMsg.Pos.y);
+    AMsg.Result := 1
+  end
+  else
     inherited;
 end;
 
@@ -20416,7 +20500,7 @@ begin
     LocalCanvas := ACanvas;
 
   try
-    LoadTextFont(Item, 0, LocalCanvas, False);
+    LoadTextFont(Item, LocalCanvas, False);
     DrawTextFlags := DrawTextFlags + [dtCalcRectAdjR, dtCalcRect, dtCalcRectAlign];
     DrawTextWEx(LocalCanvas.Handle, Item.Captions[0], TextR, DrawTextFlags, PaintTextLineCount(Item, Column));
   finally
@@ -20472,7 +20556,7 @@ begin
           Item.ImageDrawGetSize(Column, ImageW, ImageH)
         else begin
           Images := GetImageList(Column, Item, Image);
-          if  Assigned(Images) then
+          if Assigned(Images) then
           begin
             ImageW := Images.Width;
             ImageH := Images.Height
@@ -20519,9 +20603,14 @@ begin
   SetRect(RectArray.CheckRect, 0, 0, 0, 0);
 end;
 
-procedure TEasyViewItem.LoadTextFont(Item: TEasyItem; Position: Integer; ACanvas: TCanvas; Hilightable: Boolean);
+procedure TEasyViewItem.LoadTextFont(Item: TEasyItem; ACanvas: TCanvas; Hilightable: Boolean);
+var
+  LStyle: TCustomStyleServices;
 begin
+  LStyle := StyleServices;
   ACanvas.Font.Assign(OwnerListview.Font);
+  if LStyle.Enabled and (seFont in Item.OwnerListview.StyleElements) then
+    ACanvas.Font.Color := LStyle.GetStyleFontColor(sfListItemTextNormal);
   ACanvas.Brush.Style := bsClear;
   if not OwnerListview.ShowInactive then
   begin
@@ -20529,30 +20618,46 @@ begin
     begin
       if OwnerListview.Focused or Item.OwnerListview.Selection.PopupMode or Item.Hilighted then
       begin
-        ACanvas.Font.Color := OwnerListview.Selection.TextColor;
+        if LStyle.Enabled and (seFont in Item.OwnerListview.StyleElements) then
+          ACanvas.Font.Color := LStyle.GetStyleFontColor(sfListItemTextSelected)
+        else
+          ACanvas.Font.Color := OwnerListview.Selection.TextColor;
         {$IFDEF SpTBX}
         if SkinManager.GetSkinType in [sknSkin, sknDelphiStyle] then
           ACanvas.Font.Color := CurrentSkin.GetTextColor(skncListItem, CurrentSkin.GetState(True, False, False, True));
         {$ENDIF}
       end
       else
-        ACanvas.Font.Color := OwnerListview.Selection.InactiveTextColor
+      begin
+        if LStyle.Enabled and (seFont in Item.OwnerListview.StyleElements) then
+          ACanvas.Font.Color := LStyle.GetStyleFontColor(sfListItemTextDisabled)
+        else
+          ACanvas.Font.Color := OwnerListview.Selection.InactiveTextColor
+      end;
     end;
     if OwnerListview.HotTrack.Enabled and not Item.Hilighted then
     begin
       if (OwnerListview.HotTrack.FPendingObject = Item) and not Item.Selected then
       begin
-        ACanvas.Font.Color := OwnerListview.HotTrack.Color;
+        if LStyle.Enabled and (seFont in Item.OwnerListview.StyleElements) then
+          ACanvas.Font.Color := LStyle.GetStyleFontColor(sfListItemTextHot)
+        else
+          ACanvas.Font.Color := OwnerListview.HotTrack.Color;
         if OwnerListview.HotTrack.Underline then
           ACanvas.Font.Style := ACanvas.Font.Style + [fsUnderline]
-      end
-    end
-  end else
-    ACanvas.Font.Color := clGrayText;
+      end;
+    end;
+  end
+  else
+  begin
+    if LStyle.Enabled and (seFont in Item.OwnerListview.StyleElements) then
+      ACanvas.Font.Color := LStyle.GetStyleFontColor(sfListItemTextDisabled)
+    else
+      ACanvas.Font.Color := clGrayText;
+  end;
 
   if Item.Bold then
     ACanvas.Font.Style := ACanvas.Font.Style + [fsBold];
-  OwnerListview.DoItemPaintText(Item, Position, ACanvas);
 end;
 
 procedure TEasyViewItem.Paint(Item: TEasyItem; Column: TEasyColumn; ACanvas: TCanvas; ViewportClipRect: TRect; ForceSelectionRectDraw: Boolean);
@@ -20582,7 +20687,8 @@ begin
       begin
         // Paint the Selection Rectangle
         // *************************
-        if not(OwnerListview.EditManager.Editing and (OwnerListview.EditManager.EditItem = Item)) then
+        //With this line, the row is not painted correctly during editing
+//        if not(OwnerListview.EditManager.Editing and (OwnerListview.EditManager.EditItem = Item)) then
           PaintSelectionRect(Item, Column, Caption, RectArray, ACanvas, ViewportClipRect, ForceSelectionRectDraw);
 
         // Next Paint the Icon or Bitmap Image
@@ -20594,7 +20700,8 @@ begin
         // If focused then show as many lines as necessary
         // Decendents should override PaintText to change the number of lines
         // as necessary
-        if not(OwnerListview.EditManager.Editing and (OwnerListview.EditManager.EditItem = Item)) or ((OwnerListview.View in [elsReport, elsReportThumb]) and (Column <> OwnerListview.EditManager.EditColumn)) then
+        //With this line, the row is not painted correctly during editing
+//        if not(OwnerListview.EditManager.Editing and (OwnerListview.EditManager.EditItem = Item)) or ((OwnerListview.View in [elsReport, elsReportThumb]) and (Column <> OwnerListview.EditManager.EditColumn)) then
         begin
           PaintText(Item, Column, Caption, RectArray, ACanvas, PaintTextLineCount(Item, Column));
 
@@ -20921,7 +21028,10 @@ begin
             end;
 
             if OverlayIndex > -1 then
-              fStyle := FStyle or IndexToOverLayMask(OverlayIndex);
+            begin
+              ImageList_SetOverlayImage(Images.Handle, OverlayIndex, 1);
+              fStyle := FStyle or IndexToOverLayMask(1);
+            end;
 
             if (RectWidth(RectArray.IconRect) < Images.Width) or (RectHeight(RectArray.IconRect) < Images.Height) then
             begin
@@ -21197,7 +21307,8 @@ begin
     AbsIndex := ValidateColumnIndex(Column);
 
     Hilightable := (Item.Selected or Item.Hilighted) and ((AbsIndex = 0) or (FullRowSelect or OwnerListview.Selection.GroupSelections));
-    LoadTextFont(Item, AbsIndex, ACanvas, Hilightable);
+    LoadTextFont(Item, ACanvas, Hilightable);
+    OwnerListview.DoItemPaintText(Item, AbsIndex, ACanvas);
 
     DrawTextFlags := [dtEndEllipsis];
 
@@ -21342,26 +21453,28 @@ end;
 { TEasyDefaultCellSize }
 
 constructor TEasyCellSize.Create(AnOwner: TCustomEasyListview);
-var
-  hdcScreen: hDC;
 begin
   inherited Create(AnOwner);
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    FWidth := Round(DEFAULT_WIDTH_ICON * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH);
-    FHeight := Round(DEFAULT_HEIGHT_ICON * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH);
-    FHeightAutoSizeRaw := FHeight;
-    FWidthAutoSizeRaw := FWidth;
-  finally
-    ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  FWidth := DEFAULT_WIDTH_ICON;
+  FHeight := DEFAULT_HEIGHT_ICON;
+  FHeightAutoSizeRaw := FHeight;
+  FWidthAutoSizeRaw := FWidth;
+end;
+
+procedure TEasyCellSize.ChangeScale(M, D: Integer);
+begin
+  FWidth := MulDiv(FWidth, M, D);
+  FHeight := MulDiv(FHeight, M, D);
+  FHeightAutoSizeRaw := MulDiv(FHeightAutoSizeRaw, M, D);
+  FWidthAutoSizeRaw := MulDiv(FWidthAutoSizeRaw, M, D);
 end;
 
 function TEasyCellSize.GetHeight: Integer;
 begin
   if AutoSizeCaption then
     Result := FHeightAutoSizeRaw
-  else begin
+  else
+  begin
     Result := FHeight;
     if Result < 1 then
       Result := 1
@@ -21377,7 +21490,8 @@ function TEasyCellSize.GetWidth: Integer;
 begin
   if AutoSizeCaption then
     Result := FWidthAutoSizeRaw
-  else begin
+  else
+  begin
     Result := FWidth;
     if Result < 1 then
       Result := 1
@@ -21399,23 +21513,18 @@ begin
   end;
 end;
 
-procedure TEasyCellSize.RestoreDefaults;
-var
-  hdcScreen: hDC;
+procedure TEasyCellSize.RestoreDefaults(PPI: Integer);
 begin
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    SetSize(Round(DEFAULT_WIDTH_ICON * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH),
-            Round(DEFAULT_HEIGHT_ICON * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH))
-  finally
-     ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  SetSize(DEFAULT_WIDTH_ICON, DEFAULT_HEIGHT_ICON);
+  ChangeScale(PPI, Screen.DefaultPixelsPerInch);
 end;
 
 procedure TEasyCellSize.SetRawAutoSize(AWidth, AHeight: Integer);
 begin
-  if AWidth < 0 then AWidth := 0;
-  if AHeight < 0 then AHeight := 0;
+  if AWidth < 0 then
+    AWidth := 0;
+  if AHeight < 0 then
+    AHeight := 0;
 
   if (AWidth <> FWidthAutoSizeRaw) or (AHeight <> FHeightAutoSizeRaw) then
   begin
@@ -21442,8 +21551,10 @@ end;
 
 procedure TEasyCellSize.SetRawSize(AWidth, AHeight: Integer);
 begin
-  if AWidth < 0 then AWidth := 0;
-  if AHeight < 0 then AHeight := 0;
+  if AWidth < 0 then
+    AWidth := 0;
+  if AHeight < 0 then
+    AHeight := 0;
 
   if (AWidth <> FWidth) or (AHeight <> FHeight) then
   begin
@@ -21456,8 +21567,10 @@ end;
 
 procedure TEasyCellSize.SetSize(AWidth, AHeight: Integer);
 begin
-  if AWidth < 0 then AWidth := 0;
-  if AHeight < 0 then AHeight := 0;
+  if AWidth < 0 then
+    AWidth := 0;
+  if AHeight < 0 then
+    AHeight := 0;
 
   if AutoSizeCaption then
   begin
@@ -21466,7 +21579,8 @@ begin
       FWidthAutoSizeRaw := AWidth;
       FHeightAutoSizeRaw := AHeight;
     end;
-  end else
+  end
+  else
   begin
     if (AWidth <> FWidth) or (AHeight <> FHeight) then
     begin
@@ -21642,7 +21756,7 @@ begin
         ACaption := Item.Captions[AbsIndex];
         if ACaption = '' then
           ACaption := ' ';
-        LoadTextFont(Item, PositionIndex, OwnerListview.ScratchCanvas, Item.Selected);
+        LoadTextFont(Item, OwnerListview.ScratchCanvas, Item.Selected);
         DrawTextWEx(OwnerListview.ScratchCanvas.Handle, ACaption, RectArray.FullTextRect, DrawTextFlags, -1);
         DrawTextWEx(OwnerListview.ScratchCanvas.Handle, ACaption, RectArray.TextRect, DrawTextFlags, PaintTextLineCount(Item, Column));
       end;
@@ -21793,7 +21907,7 @@ begin
       // **********
       if Assigned(OwnerListview.ScratchCanvas) then
       begin
-        LoadTextFont(Item, PositionIndex, OwnerListview.ScratchCanvas, Item.Selected);
+        LoadTextFont(Item, OwnerListview.ScratchCanvas, Item.Selected);
         ACaption := Item.Captions[AbsIndex];
         if ACaption = '' then
           ACaption := ' ';
@@ -21905,160 +22019,103 @@ begin
   inherited Destroy;
 end;
 
-{ TEasyDefaultSmallIconCellSize }
-
-constructor TEasyCellSizeSmallIcon.Create(
-  AnOwner: TCustomEasyListview);
-var
-  hdcScreen: hDC;
+procedure TEasyCellSizes.ChangeScale(M, D: Integer);
 begin
-  inherited Create(AnOwner);
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    FWidth := Round(DEFAULT_WIDTH_SMALLICON * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH);
-    FHeight := Round(DEFAULT_HEIGHT_SMALLICON * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH);
-    FHeightAutoSizeRaw := FHeight;
-    FWidthAutoSizeRaw := FWidth;
-  finally
-    ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  FIcon.ChangeScale(M, D);
+  FSmallIcon.ChangeScale(M, D);
+  FThumbnail.ChangeScale(M, D);
+  FTile.ChangeScale(M, D);
+  FList.ChangeScale(M, D);
+  FReport.ChangeScale(M, D);
+  FReportThumb.ChangeScale(M, D);
+  FFilmStrip.ChangeScale(M, D);
+  FGrid.ChangeScale(M, D);
 end;
 
-procedure TEasyCellSizeSmallIcon.RestoreDefaults;
-var
-  hdcScreen: hDC;
+{ TEasyDefaultSmallIconCellSize }
+
+constructor TEasyCellSizeSmallIcon.Create(AnOwner: TCustomEasyListview);
 begin
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    SetSize(Round(DEFAULT_WIDTH_SMALLICON * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH),
-            Round(DEFAULT_HEIGHT_SMALLICON * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH))
-  finally
-     ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  inherited Create(AnOwner);
+  FWidth := DEFAULT_WIDTH_SMALLICON;
+  FHeight := DEFAULT_HEIGHT_SMALLICON;
+  FHeightAutoSizeRaw := FHeight;
+  FWidthAutoSizeRaw := FWidth;
+end;
+
+procedure TEasyCellSizeSmallIcon.RestoreDefaults(PPI: Integer);
+begin
+  SetSize(DEFAULT_WIDTH_SMALLICON, DEFAULT_HEIGHT_SMALLICON);
+  ChangeScale(PPI, Screen.DefaultPixelsPerInch);
 end;
 
 { TEasyDefaultThumbnailCellSize }
 
 constructor TEasyCellSizeThumbnail.Create(AnOwner: TCustomEasyListview);
-var
-  hdcScreen: hDC;
 begin
   inherited Create(AnOwner);
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    FWidth := Round(DEFAULT_WIDTH_THUMBNAIL * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH);
-    FHeight := Round(DEFAULT_HEIGHT_THUMBNAIL * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH);
-    FHeightAutoSizeRaw := FHeight;
-    FWidthAutoSizeRaw := FWidth;
-  finally
-    ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  FWidth := DEFAULT_WIDTH_THUMBNAIL;
+  FHeight := DEFAULT_HEIGHT_THUMBNAIL;
+  FHeightAutoSizeRaw := FHeight;
+  FWidthAutoSizeRaw := FWidth;
 end;
 
-procedure TEasyCellSizeThumbnail.RestoreDefaults;
-var
-  hdcScreen: hDC;
+procedure TEasyCellSizeThumbnail.RestoreDefaults(PPI: Integer);
 begin
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    SetSize(Round(DEFAULT_WIDTH_THUMBNAIL * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH),
-            Round(DEFAULT_HEIGHT_THUMBNAIL * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH))
-  finally
-     ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  SetSize(DEFAULT_WIDTH_THUMBNAIL, DEFAULT_HEIGHT_THUMBNAIL);
+  ChangeScale(PPI, Screen.DefaultPixelsPerInch);
 end;
 
 { TEasyDefaultTileCellSize }
 
 constructor TEasyCellSizeTile.Create(AnOwner: TCustomEasyListview);
-var
-  hdcScreen: hDC;
 begin
   inherited Create(AnOwner);
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    FWidth := Round(DEFAULT_WIDTH_TILE * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH);
-    FHeight := Round(DEFAULT_HEIGHT_TILE * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH);
-    FHeightAutoSizeRaw := FHeight;
-    FWidthAutoSizeRaw := FWidth;
-  finally
-    ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  FWidth := DEFAULT_WIDTH_TILE;
+  FHeight := DEFAULT_HEIGHT_TILE;
+  FHeightAutoSizeRaw := FHeight;
+  FWidthAutoSizeRaw := FWidth;
 end;
 
-procedure TEasyCellSizeTile.RestoreDefaults;
-var
-  hdcScreen: hDC;
+procedure TEasyCellSizeTile.RestoreDefaults(PPI: Integer);
 begin
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    SetSize(Round(DEFAULT_WIDTH_TILE * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH),
-            Round(DEFAULT_HEIGHT_TILE * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH))
-  finally
-     ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  SetSize(DEFAULT_WIDTH_TILE, DEFAULT_HEIGHT_TILE);
+  ChangeScale(PPI, Screen.DefaultPixelsPerInch);
 end;
 
 { TEasyDefaultListCellSize }
 
 constructor TEasyCellSizeList.Create(AnOwner: TCustomEasyListview);
-var
-  hdcScreen: hDC;
 begin
   inherited Create(AnOwner);
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    FWidth := Round(DEFAULT_WIDTH_LIST * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH);
-    FHeight := Round(DEFAULT_HEIGHT_LIST * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH);
-    FHeightAutoSizeRaw := FHeight;
-    FWidthAutoSizeRaw := FWidth;
-  finally
-    ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  FWidth := DEFAULT_WIDTH_LIST;
+  FHeight := DEFAULT_HEIGHT_LIST;
+  FHeightAutoSizeRaw := FHeight;
+  FWidthAutoSizeRaw := FWidth;
 end;
 
-procedure TEasyCellSizeList.RestoreDefaults;
-var
-  hdcScreen: hDC;
+
+procedure TEasyCellSizeList.RestoreDefaults(PPI: Integer);
 begin
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    SetSize(Round(DEFAULT_WIDTH_LIST * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH),
-            Round(DEFAULT_HEIGHT_LIST * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH))
-  finally
-     ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  SetSize(DEFAULT_WIDTH_LIST, DEFAULT_HEIGHT_LIST);
+  ChangeScale(PPI, Screen.DefaultPixelsPerInch);
 end;
 
 { TEasyDefaultReportCellSize }
 
 constructor TEasyCellSizeReport.Create(AnOwner: TCustomEasyListview);
-var
-  hdcScreen: hDC;
 begin
   inherited Create(AnOwner);
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    FWidth := Round(DEFAULT_WIDTH_REPORT * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH);
-    FHeight := Round(DEFAULT_HEIGHT_REPORT * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH);
-    FHeightAutoSizeRaw := FHeight;
-    FWidthAutoSizeRaw := FWidth;
-  finally
-    ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  FWidth := DEFAULT_WIDTH_REPORT;
+  FHeight := DEFAULT_HEIGHT_REPORT;
+  FHeightAutoSizeRaw := FHeight;
+  FWidthAutoSizeRaw := FWidth;
 end;
 
-procedure TEasyCellSizeReport.RestoreDefaults;
-var
-  hdcScreen: hDC;
+procedure TEasyCellSizeReport.RestoreDefaults(PPI: Integer);
 begin
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    SetSize(Round(DEFAULT_WIDTH_REPORT * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH),
-            Round(DEFAULT_HEIGHT_REPORT * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH))
-  finally
-     ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  SetSize(DEFAULT_WIDTH_REPORT, DEFAULT_HEIGHT_REPORT);
+  ChangeScale(PPI, Screen.DefaultPixelsPerInch);
 end;
 
 function TEasyViewTileItem.DropMarkerDir: TEasyInsertMarkerDir;
@@ -22201,7 +22258,7 @@ begin
           ACaption := ' ';
         if Assigned(OwnerListview.ScratchCanvas) then
         begin
-          LoadTextFont(Item, PositionIndex, OwnerListview.ScratchCanvas, Item.Selected);
+          LoadTextFont(Item, OwnerListview.ScratchCanvas, Item.Selected);
           DrawTextWEx(OwnerListview.ScratchCanvas.Handle, ACaption, RectArray.TextRects[0], DrawTextFlags, PaintTextLineCount(Item, Column));
         end;
         if RectArray.TextRects[0].Bottom > RectArray.LabelRect.Bottom then
@@ -22223,7 +22280,7 @@ begin
               RectArray.TextRects[i].Top := RectArray.TextRects[i - 1].Bottom;
               if Assigned(OwnerListview.ScratchCanvas) then
               begin
-                LoadTextFont(Item, i, OwnerListview.ScratchCanvas, Item.Selected);
+                LoadTextFont(Item, OwnerListview.ScratchCanvas, Item.Selected);
                 // Details only get one line
                 DrawTextWEx(OwnerListview.ScratchCanvas.Handle, ACaption, RectArray.TextRects[i], DrawTextFlags, PaintTextLineCount(Item, Column));
               end;
@@ -22302,7 +22359,6 @@ end;
 
 procedure TEasyViewTileItem.PaintBefore(Item: TEasyItem; Column: TEasyColumn; const Caption: string; ACanvas: TCanvas; RectArray: TEasyRectArrayObject; var Handled: Boolean);
 begin
-
 end;
 
 procedure TEasyViewTileItem.PaintText(Item: TEasyItem; Column: TEasyColumn; const Caption: string; RectArray: TEasyRectArrayObject; ACanvas: TCanvas; LinesToDraw: Integer);
@@ -22325,7 +22381,7 @@ begin
   begin
     if Item.Details[0] > -1 then
     begin
-      LoadTextFont(Item, 0, ACanvas, Item.Selected);
+      LoadTextFont(Item, ACanvas, Item.Selected);
       {$IFDEF SpTBX}
       if SkinManager.GetSkinType in [sknSkin, sknDelphiStyle] then
       begin
@@ -22339,7 +22395,7 @@ begin
     begin
       if Item.Details[i] > -1 then
       begin
-        LoadTextFont(Item, i, ACanvas, Item.Selected);
+        LoadTextFont(Item, ACanvas, Item.Selected);
         {$IFDEF SpTBX}
         if SkinManager.GetSkinType in [sknSkin, sknDelphiStyle] then
         begin
@@ -22484,7 +22540,7 @@ begin
         RectArray.IconRect := RectArray.BoundsRect;
         if not OwnerListview.PaintInfoItem.HideCaption then
         begin
-          LoadTextFont(Item, PositionIndex, Canvas, Item.Selected);
+          LoadTextFont(Item, Canvas, Item.Selected);
           GetTextMetrics(Canvas.Handle, Metrics);
           RectArray.IconRect.Bottom := RectArray.IconRect.Bottom - Metrics.tmHeight * 2
         end else
@@ -22539,7 +22595,7 @@ begin
             cvaCenter: Include(DrawTextFlags, dtCenter);
           end;
 
-          LoadTextFont(Item, PositionIndex, Canvas, Item.Selected);
+          LoadTextFont(Item, Canvas, Item.Selected);
           ACaption := Item.Captions[AbsIndex];
           DrawTextWEx(Canvas.Handle, ACaption, RectArray.FullTextRect, DrawTextFlags, -1);
           DrawTextWEx(Canvas.Handle, ACaption, RectArray.TextRect, DrawTextFlags, PaintTextLineCount(Item, Column));
@@ -22730,27 +22786,34 @@ begin
 end;
 
 procedure TEasyViewColumn.ItemRectArray(Column: TEasyColumn; var RectArray: TEasyRectArrayObject);
+const
+  cInflate = -2;
+  cMargin = 4;
 var
+   CaptionLines: Integer;
+   i: Integer;
    DrawTextFlags: TCommonDrawTextWFlags;
-   i, CaptionLines: integer;
-   R: TRect;
-   ImageW, ImageH: Integer;
+   ImageH: Integer;
+   ImageW: Integer;
+   InflateSize: Integer;
+   Margin: Integer;
    Pt: TPoint;
+   R: TRect;
 begin
-  Pt.x := 0;
-  Pt.y := 0;
+  Pt.X := 0;
+  Pt.Y := 0;
   if Assigned(Column) then
   begin
     if not Column.Initialized then
       Column.Initialized := True;
-
 
     FillChar(RectArray, SizeOf(RectArray), #0);
 
     GetImageSize(Column, ImageW, ImageH);
 
     RectArray.BoundsRect := Column.DisplayRect;
-    InflateRect(RectArray.BoundsRect, -2, -2);
+    InflateSize := MulDiv(cInflate, OwnerListview.CurrentPPI, Screen.DefaultPixelsPerInch);
+    InflateRect(RectArray.BoundsRect, InflateSize, InflateSize);
 
     // Make the CheckRect 0 width to initialize it
     RectArray.CheckRect := RectArray.BoundsRect;
@@ -22819,7 +22882,8 @@ begin
             RectArray.LabelRect.Bottom := RectArray.IconRect.Top - Column.CaptionIndent;
           end;
       end
-    end else
+    end
+    else
     begin
       RectArray.LabelRect := RectArray.BoundsRect;
       RectArray.LabelRect.Left := RectArray.IconRect.Right;
@@ -22835,7 +22899,7 @@ begin
             RectArray.LabelRect.Left := RectArray.LabelRect.Left + Column.SortGlyphIndent + OwnerListview.GlobalImages.ColumnSortUp.Width;
             RectArray.SortRect.Right := RectArray.SortRect.Left + OwnerListview.GlobalImages.ColumnSortUp.Width;
             RectArray.SortRect.Top := RectArray.SortRect.Top + (RectHeight(RectArray.SortRect) - OwnerListview.GlobalImages.ColumnSortUp.Height) div 2;
-            RectArray.SortRect.Bottom := RectArray.SortRect.Top + OwnerListview.GlobalImages.ColumnSortUp.Height
+            RectArray.SortRect.Bottom := RectArray.SortRect.Top + OwnerListview.GlobalImages.ColumnSortUp.Height;
           end;
         esgaRight:
           begin
@@ -22844,13 +22908,13 @@ begin
             RectArray.LabelRect.Right := RectArray.LabelRect.Right - Column.SortGlyphIndent - OwnerListview.GlobalImages.ColumnSortUp.Width;
             RectArray.SortRect.Left := RectArray.SortRect.Right - OwnerListview.GlobalImages.ColumnSortUp.Width;
             RectArray.SortRect.Top := RectArray.SortRect.Top + (RectHeight(RectArray.SortRect) - OwnerListview.GlobalImages.ColumnSortUp.Height) div 2;
-            RectArray.SortRect.Bottom := RectArray.SortRect.Top + OwnerListview.GlobalImages.ColumnSortUp.Height
-          end
+            RectArray.SortRect.Bottom := RectArray.SortRect.Top + OwnerListview.GlobalImages.ColumnSortUp.Height;
+          end;
       else
         // no Sort Glyph
         RectArray.SortRect := RectArray.LabelRect;
         RectArray.SortRect.Right := RectArray.SortRect.Left;
-      end
+      end;
     end;
 
     if Column.DropDownButton.Visible then
@@ -22861,31 +22925,31 @@ begin
         begin
           RectArray.LabelRect.Right := RectArray.LabelRect.Right - RectHeight(RectArray.BoundsRect);
           RectArray.DropDownArrow.Left := RectArray.DropDownArrow.Right - RectHeight(RectArray.BoundsRect)
-        end
-      end
+        end;
+      end;
     end;
 
     // See if there is enough room for the label
     if IsRectProper(RectArray.LabelRect) then
     begin
-
       RectArray.TextRect := RectArray.LabelRect;
 
+      Margin := MulDiv(cMargin, OwnerListview.CurrentPPI, Screen.DefaultPixelsPerInch);
       case Column.Alignment of
         taLeftJustify:
           begin
             RectArray.TextRect.Left := RectArray.TextRect.Left + Column.CaptionIndent;
-            RectArray.TextRect.Right := RectArray.TextRect.Right - 4;
+            RectArray.TextRect.Right := RectArray.TextRect.Right - Margin;
           end;
         taRightJustify:
           begin
             RectArray.TextRect.Right := RectArray.TextRect.Right - Column.CaptionIndent;
-            RectArray.TextRect.Left := RectArray.TextRect.Left + 4;
+            RectArray.TextRect.Left := RectArray.TextRect.Left + Margin;
           end;
       end;
 
       // Leave room for a small border between edge of the selection rect and text
-      InflateRect(RectArray.TextRect, -2, -2);
+      InflateRect(RectArray.TextRect, InflateSize, InflateSize);
 
       DrawTextFlags := [dtCalcRect, dtCalcRectAlign];
 
@@ -22925,7 +22989,8 @@ begin
           cvaBottom: OffsetRect(RectArray.TextRects[i], 0, ((RectHeight(RectArray.LabelRect) - 4) - RectHeight(RectArray.TextRect)));
         end;
       end;
-    end else
+    end
+    else
       RectArray.TextRect := Rect(0, 0, 0, 0);
 
     // Put the Sort Arrow right next to the Text
@@ -22939,8 +23004,8 @@ begin
     RectArray.FocusChangeInvalidRect := RectArray.BoundsRect;
     RectArray.EditRect := RectArray.BoundsRect;
 
-    InflateRect(RectArray.BoundsRect, 2, 2);
-  end
+    InflateRect(RectArray.BoundsRect, -InflateSize, -InflateSize);
+  end;
 end;
 
 procedure TEasyViewColumn.LoadTextFont(Column: TEasyColumn; ACanvas: TCanvas);
@@ -23041,37 +23106,48 @@ procedure TEasyViewColumn.PaintBkGnd(Column: TEasyColumn; ACanvas: TCanvas;
       procedure SpiegelnHorizontal(Bitmap:TBitmap);
       type
         TRGBArray = array[0..0] OF TRGBQuad;
-        pRGBArray = ^TRGBArray;
+        PRGBArray = ^TRGBArray;
       var
         i, j, w :  Integer;
         RowIn :  pRGBArray;
         RowOut:  pRGBArray;
       begin
-        w := Bitmap.Width*SizeOf(TRGBQuad);
+        w := Bitmap.Width * SizeOf(TRGBQuad);
         GetMem(RowIn, w);
-        for j := 0 to Bitmap.Height-1 do
-        begin
-          Move(Bitmap.Scanline[j]^, RowIn^,w);
-          RowOut := Bitmap.Scanline[j];
-          for i := 0 to Bitmap.Width-1 do
-            RowOut[i] := RowIn[Bitmap.Width-1-i];
+        try
+          for i := 0 to Bitmap.Height - 1 do
+          begin
+            Move(Bitmap.Scanline[i]^, RowIn^, w);
+            RowOut := Bitmap.Scanline[i];
+            for j := 0 to Bitmap.Width - 1 do
+              RowOut[j] := RowIn[Bitmap.Width - 1 - j];
+          end;
+          Bitmap.Assign(Bitmap);
+        finally
+          FreeMem(RowIn);
         end;
-        Bitmap.Assign(Bitmap);
-        Freemem(RowIn);
       end;
 
 var
-  NormalButtonFlags, NormalButtonStyle, PressedButtonStyle, PressedButtonFlags,
-  RaisedButtonStyle, RaisedButtonFlags: LongWord;
-  R: TRect;
-  Pt: TPoint;
-  PartID,
-  StateID: LongWord;
   Bits: TBitmap;
+  Details: TThemedElementDetails;
+  NormalButtonFlags: Cardinal;
+  NormalButtonStyle: Cardinal;
+  PartId: Integer;
+  Pt: TPoint;
+  PressedButtonFlags: Cardinal;
+  PressedButtonStyle: Cardinal;
+  RaisedButtonFlags: Cardinal;
+  RaisedButtonStyle: Cardinal;
+  R: TRect;
+  LStyle: TCustomStyleServices;
+  State: TThemedHeader;
+  StateId: Integer;
 begin
   Pt.x := 0;
   Pt.y := 0;
 
+  LStyle := StyleServices;
   {$IFDEF SpTBX}
   if SkinManager.GetSkinType in [sknSkin, sknDelphiStyle] then
     SpDrawXPHeader(ACanvas, Column.DisplayRect, Column.HotTracking[Pt], Column.Clicking)
@@ -23079,53 +23155,67 @@ begin
   {$ENDIF SpTBX}
   if OwnerListview.DrawWithThemes then
   begin
-    PartID := HP_HEADERITEM;
-    if Column.Clicking then
-      StateID := HIS_PRESSED
-    else
-    if Column.HotTracking[Pt] then
-      StateID := HIS_HOT
-    else
-      StateID := HIS_NORMAL;
-
-    if ((HiWord(ComCtl32Version) = 6) and (LoWord(ComCtl32Version) >= 10 )) or
-       ((HiWord(ComCtl32Version) > 6)) then
+    if LStyle.Enabled then
     begin
-      if (Column.SortDirection <> esdNone) then
+      if Column.Clicking then
+        State := TThemedHeader.thHeaderItemPressed
+      else if Column.HotTracking[Pt] then
+        State := TThemedHeader.thHeaderItemHot
+      else
+        State := TThemedHeader.thHeaderItemNormal;
+      Details := LStyle.GetElementDetails(State);
+      LStyle.DrawElement(ACanvas.Handle, Details, Column.DisplayRect, nil, OwnerListview.CurrentPPI);
+    end
+    else
+    begin
+      PartId := HP_HEADERITEM;
+      if Column.Clicking then
+        StateId := HIS_PRESSED
+      else if Column.HotTracking[Pt] then
+        StateId := HIS_HOT
+      else
+        StateId := HIS_NORMAL;
+
+      if ((HiWord(ComCtl32Version) = 6) and (LoWord(ComCtl32Version) >= 10)) or
+         ((HiWord(ComCtl32Version) > 6)) then
       begin
-        if StateID = HIS_PRESSED then
-          StateID := HIS_SORTEDPRESSED
-        else
-        if StateID = HIS_HOT then
-          StateID := HIS_SORTEDHOT
-        else
-          StateID := HIS_SORTEDNORMAL
-      end
-    end;
-
-    if HeaderType = ehtFooter then
-    begin
-      Bits := TBitmap.Create;
-      try
-        Bits.Width := RectWidth(Column.DisplayRect);
-        Bits.Height := RectHeight(Column.DisplayRect);
-        Bits.PixelFormat := pf32Bit;
-        DrawThemeBackground(OwnerListview.Themes.HeaderTheme, Bits.Canvas.Handle, PartID, StateID, Rect(0, 0, Bits.Width, Bits.Height), nil);
-        SpiegelnHorizontal(Bits);
-        BitBlt(ACanvas.Handle, Column.DisplayRect.Left, Column.DisplayRect.Top, Bits.Width, Bits.Height, Bits.Canvas.Handle, 0, 0, SRCCOPY);
-      finally
-        Bits.Free
+        if (Column.SortDirection <> esdNone) then
+        begin
+          if StateId = HIS_PRESSED then
+            StateId := HIS_SORTEDPRESSED
+          else if StateId = HIS_HOT then
+            StateId := HIS_SORTEDHOT
+          else
+            StateId := HIS_SORTEDNORMAL
+        end
       end;
-    end else
-    begin
-      R := Column.DisplayRect;
-      // The divider is drawn by this as well and if shorted the divider is before the button
-  //    if Column.HotTracking[Pt] and Column.DropDownButton.Visible and (RectWidth(RectArray.DropDownArrow) > 0) then
-  //      R.Right := RectArray.DropDownArrow.Left;
-      DrawThemeBackground(OwnerListview.Themes.HeaderTheme, ACanvas.Handle, PartID, StateID, R, nil);
+
+      if HeaderType = ehtFooter then
+      begin
+        Bits := TBitmap.Create;
+        try
+          Bits.Width := RectWidth(Column.DisplayRect);
+          Bits.Height := RectHeight(Column.DisplayRect);
+          Bits.PixelFormat := pf32Bit;
+          DrawThemeBackground(OwnerListview.Themes.HeaderTheme, Bits.Canvas.Handle, PartId, StateId, Rect(0, 0, Bits.Width, Bits.Height), nil);
+          SpiegelnHorizontal(Bits);
+          BitBlt(ACanvas.Handle, Column.DisplayRect.Left, Column.DisplayRect.Top, Bits.Width, Bits.Height, Bits.Canvas.Handle, 0, 0, SRCCOPY);
+        finally
+          Bits.Free
+        end;
+      end
+      else
+      begin
+        R := Column.DisplayRect;
+        // The divider is drawn by this as well and if shorted the divider is before the button
+    //    if Column.HotTracking[Pt] and Column.DropDownButton.Visible and (RectWidth(RectArray.DropDownArrow) > 0) then
+    //      R.Right := RectArray.DropDownArrow.Left;
+        DrawThemeBackground(OwnerListview.Themes.HeaderTheme, ACanvas.Handle, PartId, StateId, R, nil);
+      end;
     end;
  //   Exit;
-  end else
+  end
+  else
   begin
     ACanvas.Brush.Color := Column.Color;
     ACanvas.FillRect(Column.DisplayRect);
@@ -23135,34 +23225,35 @@ begin
 
     case Column.Style of
       ehbsThick:
-        begin
-          NormalButtonStyle := BDR_RAISEDINNER or BDR_RAISEDOUTER;
-          NormalButtonFlags := BF_LEFT or BF_TOP or BF_BOTTOM or BF_RIGHT or BF_SOFT or BF_ADJUST;
-          PressedButtonStyle := BDR_RAISEDINNER or BDR_RAISEDOUTER;
-          PressedButtonFlags := NormalButtonFlags or BF_RIGHT or BF_FLAT or BF_ADJUST;
-        end;
+      begin
+        NormalButtonStyle := BDR_RAISEDINNER or BDR_RAISEDOUTER;
+        NormalButtonFlags := BF_LEFT or BF_TOP or BF_BOTTOM or BF_RIGHT or BF_SOFT or BF_ADJUST;
+        PressedButtonStyle := BDR_RAISEDINNER or BDR_RAISEDOUTER;
+        PressedButtonFlags := NormalButtonFlags or BF_RIGHT or BF_FLAT or BF_ADJUST;
+      end;
       ehbsFlat:
-        begin
-          NormalButtonStyle := BDR_RAISEDINNER;
-          NormalButtonFlags := BF_LEFT or BF_TOP or BF_BOTTOM or BF_RIGHT or BF_ADJUST;
-          PressedButtonStyle := BDR_SUNKENOUTER;
-          PressedButtonFlags := BF_RECT or BF_ADJUST;
-        end;
-      else
-        begin
-          NormalButtonStyle := BDR_RAISEDINNER;
-          NormalButtonFlags := BF_RECT or BF_SOFT or BF_ADJUST;
-          PressedButtonStyle := BDR_SUNKENOUTER;
-          PressedButtonFlags := BF_RECT or BF_ADJUST;
-          RaisedButtonStyle := BDR_RAISEDINNER;
-          RaisedButtonFlags := BF_LEFT or BF_TOP or BF_BOTTOM or BF_RIGHT or BF_ADJUST;
-        end;
+      begin
+        NormalButtonStyle := BDR_RAISEDINNER;
+        NormalButtonFlags := BF_LEFT or BF_TOP or BF_BOTTOM or BF_RIGHT or BF_ADJUST;
+        PressedButtonStyle := BDR_SUNKENOUTER;
+        PressedButtonFlags := BF_RECT or BF_ADJUST;
+      end;
+    else
+      begin
+        NormalButtonStyle := BDR_RAISEDINNER;
+        NormalButtonFlags := BF_RECT or BF_SOFT or BF_ADJUST;
+        PressedButtonStyle := BDR_SUNKENOUTER;
+        PressedButtonFlags := BF_RECT or BF_ADJUST;
+        RaisedButtonStyle := BDR_RAISEDINNER;
+        RaisedButtonFlags := BF_LEFT or BF_TOP or BF_BOTTOM or BF_RIGHT or BF_ADJUST;
+      end;
     end;
 
     R := Column.DisplayRect;
     if Column.Clicking then
       DrawEdge(ACanvas.Handle, R, PressedButtonStyle, PressedButtonFlags)
-    else begin
+    else
+    begin
       if (Column.Hilighted) and (Column.Style = ehbsPlate) then
         DrawEdge(ACanvas.Handle, R, RaisedButtonStyle, RaisedButtonFlags)
       else
@@ -23298,17 +23389,52 @@ end;
 
 procedure TEasyViewColumn.PaintSortGlyph(Column: TEasyColumn; ACanvas: TCanvas;
   HeaderType: TEasyHeaderType; RectArray: TEasyRectArrayObject);
+const
+  cArrows: array[Boolean] of Integer = (HSAS_SORTEDDOWN, HSAS_SORTEDUP);
 var
+  Direction: TScrollDirection;
   Image: TBitmap;
+  Location: TPoint;
+  OldColor: TColor;
+  Services: TCustomStyleServices;
+  Size: Integer;
 begin
   if Column.SortDirection <> esdNone then
   begin
-    if Column.SortDirection = esdAscending then
-      Image := OwnerListview.GlobalImages.ColumnSortUp
-    else
-      Image := OwnerListview.GlobalImages.ColumnSortDown;
+    if UseThemes then
+    begin
+      Services := StyleServices(OwnerListview);
+      if Services.Enabled then
+      begin
+        OldColor := ACanvas.Pen.Color;
+        ACanvas.Pen.Color := Services.GetSystemColor(ACanvas.Font.Color);
+        if Column.SortDirection = esdAscending then
+          Direction := TScrollDirection.sdUp
+        else
+          Direction := TScrollDirection.sdDown;
 
-    ACanvas.Draw(RectArray.SortRect.Left, RectArray.SortRect.Top, Image);
+        Size := RectArray.SortRect.Height div 4;
+        Location := RectArray.SortRect.Location;
+        Location.X := Location.X + Size;
+        Location.Y := Location.Y + Size;
+        DrawArrow(ACanvas, Direction, Location, Size);
+        ACanvas.Pen.Color := OldColor;
+      end
+      else
+      begin
+        DrawThemeBackground(OwnerListview.Themes.HeaderTheme, ACanvas.Handle,
+          HP_HEADERSORTARROW, cArrows[Column.SortDirection = esdAscending],
+          RectArray.SortRect, nil);
+      end;
+    end
+    else
+    begin
+      if Column.SortDirection = esdAscending then
+        Image := OwnerListview.GlobalImages.ColumnSortUp
+      else
+        Image := OwnerListview.GlobalImages.ColumnSortDown;
+      ACanvas.Draw(RectArray.SortRect.Left, RectArray.SortRect.Top, Image);
+    end;
   end
 end;
 
@@ -23316,33 +23442,43 @@ procedure TEasyViewColumn.PaintText(Column: TEasyColumn; ACanvas: TCanvas;
   HeaderType: TEasyHeaderType; RectArray: TEasyRectArrayObject;
   LinesToDraw: Integer);
 var
-   DrawTextFlags: TCommonDrawTextWFlags;
+  DrawTextFlags: TCommonDrawTextWFlags;
+  OldColor: TColor;
+  OldStyle: TBrushStyle;
+  LStyle: TCustomStyleServices;
 begin
-   if not IsRectEmpty(RectArray.TextRect) then
-   begin
-     ACanvas.Brush.Style := bsClear;
+  if not IsRectEmpty(RectArray.TextRect) then
+  begin
+    OldStyle := ACanvas.Brush.Style;
+    ACanvas.Brush.Style := bsClear;
 
-     DrawTextFlags := [dtEndEllipsis];
+    DrawTextFlags := [dtEndEllipsis];
 
-     if LinesToDraw = 1 then
-       Include(DrawTextFlags, dtSingleLine);
+    if LinesToDraw = 1 then
+      Include(DrawTextFlags, dtSingleLine);
 
-     case Column.Alignment of
-       taLeftJustify: Include(DrawTextFlags, dtLeft);
-       taRightJustify: Include(DrawTextFlags, dtRight);
-       taCenter:  Include(DrawTextFlags, dtCenter);
-     end;
+    case Column.Alignment of
+      taLeftJustify: Include(DrawTextFlags, dtLeft);
+      taRightJustify: Include(DrawTextFlags, dtRight);
+      taCenter:  Include(DrawTextFlags, dtCenter);
+    end;
 
-     // Vertical Alignment is accounted for in the Text Rects
+    // Vertical Alignment is accounted for in the Text Rects
 
-     LoadTextFont(Column, ACanvas);
-     if Column.Bold then
-       ACanvas.Font.Style := ACanvas.Font.Style + [fsBold];
+    LoadTextFont(Column, ACanvas);
+    if Column.Bold then
+      ACanvas.Font.Style := ACanvas.Font.Style + [fsBold];
 
-     OwnerListview.DoColumnPaintText(Column, ACanvas);
-     DrawTextWEx(ACanvas.Handle, Column.Caption, RectArray.TextRects[0], DrawTextFlags, OwnerListview.PaintInfoColumn.CaptionLines);
-end;
+    OwnerListview.DoColumnPaintText(Column, ACanvas);
+    LStyle := StyleServices;
+    OldColor := ACanvas.Font.Color;
+    if LStyle.Enabled then
+      ACanvas.Font.Color := LStyle.GetSystemColor(ACanvas.Font.Color);
+    DrawTextWEx(ACanvas.Handle, Column.Caption, RectArray.TextRects[0], DrawTextFlags, OwnerListview.PaintInfoColumn.CaptionLines);
 
+    ACanvas.Font.Color := OldColor;
+    ACanvas.Brush.Style := OldStyle;
+  end;
 end;
 
 procedure TEasyViewColumn.ReSizeRectArray(
@@ -23530,7 +23666,7 @@ begin
       try
         ACanvas.Handle := GetDC(0);
         Item.View.ItemRectArray(Item, nil, ACanvas, '', RectArray);
-        Item.View.LoadTextFont(Item, 0, ACanvas, True);
+        Item.View.LoadTextFont(Item, ACanvas, True);
         TextSize := TextExtentW(Item.Caption, ACanvas);
         CellSize.FWidthAutoSizeRaw := RectWidth(RectArray.CheckRect) +
                            RectWidth(RectArray.IconRect) +
@@ -24826,15 +24962,22 @@ end;
 { TEasyPaintInfoBaseColumn }
 
 constructor TEasyPaintInfoBaseColumn.Create(AnOwner: TCustomEasyListview);
+const
+  cDefaultIndent = 2;
 begin
   inherited;
   FColor := clBtnFace;
   FSortGlyphAlign := esgaRight;
-  FSortGlyphIndent := 2;
+  FSortGlyphIndent := cDefaultIndent;
   FHotTrack := True;
   FStyle := ehbsThick;
   FImagePosition := ehpLeft;
   FHilightFocusedColor := $00F7F7F7;
+end;
+
+procedure TEasyPaintInfoBaseColumn.ChangeScale(M, D: Integer);
+begin
+  FSortGlyphIndent := MulDiv(FSortGlyphIndent, M, D);
 end;
 
 procedure TEasyPaintInfoBaseColumn.SetColor(Value: TColor);
@@ -24905,18 +25048,14 @@ end;
 { TEasyViewReportItem}
 function TEasyViewReportItem.AllowDrag(Item: TEasyItem; ViewportPoint: TPoint): Boolean;
 var
-  RectArray: TEasyRectArrayObject;
   R: TRect;
 begin
   if FullRowSelect then
   begin
-    ItemRectArray(Item, nil, OwnerListview.ScratchCanvas, Item.Caption, RectArray);
-    UnionRect(R, RectArray.TextRect, RectArray.IconRect);
-    if Item.Selected and Windows.PtInRect(R, ViewportPoint) then
-      Result := True
-    else
-      Result := False
-  end else
+    R := Item.DisplayRect;
+    Result := Item.Selected and Windows.PtInRect(R, ViewportPoint);
+  end
+  else
     Result := inherited AllowDrag(Item, ViewportPoint);
 end;
 
@@ -25751,10 +25890,10 @@ begin
         Menu := nil;
         Listview.DoItemGetEditMenu(Self, Menu);
         if Assigned(Menu) then
-          Menu.Popup(LOWORD(Message.LParam), HIWORD(Message.LParam))
-        else
-          // Don't let the VCL hook the parent window background menu to the editor
-          CallWindowProc(TWinControlHack(Editor).DefWndProc, Editor.Handle, Message.Msg, Message.wParam, Message.lParam);
+          Menu.Popup(Message.LParamLo, Message.LParamHi);
+//        else
+//          // Don't let the VCL hook the parent window background menu to the editor
+//          CallWindowProc(TWinControlHack(Editor).DefWndProc, Editor.Handle, Message.Msg, Message.wParam, Message.lParam);
         Message.Result := 1;
       end;
   end;
@@ -26361,35 +26500,42 @@ end;
 
 function TEasyItem.HitTestAt(ViewportPoint: TPoint; var HitInfo: TEasyItemHitTestInfoSet): Boolean;
 var
+  lCount: Integer;
   RectArray: TEasyRectArrayObject;
   R: TRect;
 begin
   HitInfo := [];
-  ItemRectArray(OwnerListview.Header.FirstColumn, OwnerListview.ScratchCanvas, RectArray);
-  R := RectArray.IconRect;
-  // Make the blank area between the image and text part of the image
-  if OwnerListview.IsVertView then
-     R.Bottom := R.Bottom + OwnerListview.PaintInfoItem.CaptionIndent
-  else
-    R.Right := R.Right + OwnerListview.PaintInfoItem.CaptionIndent;
+  for lCount := 0 to OwnerListview.Header.Columns.Count - 1 do
+  begin
+    ItemRectArray(OwnerListview.Header.Columns[lCount], OwnerListview.ScratchCanvas, RectArray);
+    R := RectArray.BoundsRect;
+    // Make the blank area between the image and text part of the image
+    if OwnerListview.IsVertView then
+      R.Bottom := R.Bottom + OwnerListview.PaintInfoItem.CaptionIndent
+    else
+      R.Right := R.Right + OwnerListview.PaintInfoItem.CaptionIndent;
 
-  if PtInRect(R, ViewportPoint) then
-    Include(HitInfo, ehtOnIcon);
-  if PtInRect(RectArray.CheckRect, ViewportPoint) then
-    Include(HitInfo, ehtOnCheck);
-  if PtInRect(RectArray.FullFocusSelRect, ViewportPoint) then
-    Include(HitInfo, ehtOnText);
-  if PtInRect(RectArray.LabelRect, ViewportPoint) then
-    Include(HitInfo, ehtOnLabel);
-  if PtInRect(RectArray.ClickselectBoundsRect, ViewportPoint) then
-    Include(HitInfo, ehtOnClickselectBounds);
-  if PtInRect(RectArray.DragSelectBoundsRect, ViewportPoint) then
-    Include(HitInfo, ehtOnDragSelectBounds);
-  if PtInRect(RectArray.DragSelectBoundsRect, ViewportPoint) then
-    Include(HitInfo, ehtOnDragSelectBounds);
-  if PtInRect(RectArray.StateRect, ViewportPoint) then
-    Include(HitInfo, ehtStateIcon);
-  Result := HitInfo <> [];
+    if PtInRect(R, ViewportPoint) then
+      Include(HitInfo, ehtOnIcon);
+    if PtInRect(RectArray.CheckRect, ViewportPoint) then
+      Include(HitInfo, ehtOnCheck);
+    if PtInRect(RectArray.FullFocusSelRect, ViewportPoint) then
+      Include(HitInfo, ehtOnText);
+    if PtInRect(RectArray.LabelRect, ViewportPoint) then
+      Include(HitInfo, ehtOnLabel);
+    if PtInRect(RectArray.ClickselectBoundsRect, ViewportPoint) then
+      Include(HitInfo, ehtOnClickselectBounds);
+    if PtInRect(RectArray.DragSelectBoundsRect, ViewportPoint) then
+      Include(HitInfo, ehtOnDragSelectBounds);
+    if PtInRect(RectArray.DragSelectBoundsRect, ViewportPoint) then
+      Include(HitInfo, ehtOnDragSelectBounds);
+    if PtInRect(RectArray.StateRect, ViewportPoint) then
+      Include(HitInfo, ehtStateIcon);
+    Result := HitInfo <> [];
+    if Result then
+      Exit;
+  end;
+  Result := False;
 end;
 
 function TEasyItem.LocalPaintInfo: TEasyPaintInfoBasic;
@@ -30466,32 +30612,18 @@ end;
 
 { TEasyCellSizeReportThumbs }
 constructor TEasyCellSizeReportThumb.Create(AnOwner: TCustomEasyListview);
-var
-  hdcScreen: hDC;
 begin
   inherited Create(AnOwner);
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    FWidth := Round(DEFAULT_WIDTH_REPORTTHUMB * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH);
-    FHeight := Round(DEFAULT_HEIGHT_REPORTTHUMB * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH);
-    FHeightAutoSizeRaw := FHeight;
-    FWidthAutoSizeRaw := FWidth;
-  finally
-    ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  FWidth := DEFAULT_WIDTH_REPORTTHUMB;
+  FHeight := DEFAULT_HEIGHT_REPORTTHUMB;
+  FHeightAutoSizeRaw := FHeight;
+  FWidthAutoSizeRaw := FWidth;
 end;
 
-procedure TEasyCellSizeReportThumb.RestoreDefaults;
-var
-  hdcScreen: hDC;
+procedure TEasyCellSizeReportThumb.RestoreDefaults(PPI: Integer);
 begin
-  hdcScreen := GetDC(GetDesktopWindow);
-  try
-    SetSize(Round(DEFAULT_WIDTH_REPORTTHUMB * GetDeviceCaps(hdcScreen, LOGPIXELSX)/DEFAULT_PIXEL_PER_INCH),
-            Round(DEFAULT_HEIGHT_REPORTTHUMB * GetDeviceCaps(hdcScreen, LOGPIXELSY)/DEFAULT_PIXEL_PER_INCH))
-  finally
-     ReleaseDC(GetDesktopWindow, hdcScreen)
-  end
+  SetSize(DEFAULT_WIDTH_REPORTTHUMB, DEFAULT_HEIGHT_REPORTTHUMB);
+  ChangeScale(PPI, Screen.DefaultPixelsPerInch);
 end;
 
 { TEasyViewReportThumbItem }
@@ -30550,9 +30682,15 @@ initialization
   RegisterClass(TEasyColumnVirtual);
   RegisterClass(TEasyColumnInterfaced);
   RegisterClass(TEasyColumnStored);
+  TCustomStyleEngine.RegisterStyleHook(TCustomEasyListview, TScrollingStyleHook);
 
 finalization
   FreeAndNil(AlphaBlender);
   OleUnInitialize();
+  //This is an ugly workaround for a Vcl bug.
+  try
+    TCustomStyleEngine.UnRegisterStyleHook(TCustomEasyListview, TScrollingStyleHook);
+  except
+  end;
 
 end.

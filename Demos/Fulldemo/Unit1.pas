@@ -23,7 +23,10 @@ uses
   EasyListview,
   MPCommonUtilities,
   MPCommonObjects,
-  Menus;
+  Menus,
+  System.ImageList,
+  Vcl.VirtualImageList,
+  DatamoduleImagelists;
 
 type
   TForm1 = class(TForm)
@@ -283,7 +286,6 @@ type
     CheckBoxHideCaptions: TCheckBox;
     Button5: TButton;
     CheckBoxStateImages: TCheckBox;
-    ImageListState: TImageList;
     CheckBoxHeaderAlwaysVisible: TCheckBox;
     CheckBoxSnapHorzScroll: TCheckBox;
     Label58: TLabel;
@@ -339,6 +341,11 @@ type
     PanelColumnColor: TPanel;
     ButtonColumnColors: TButton;
     CheckBoxColumnPaintFullWindow: TCheckBox;
+    vilImageListGroups: TVirtualImageList;
+    vilImagesSmall: TVirtualImageList;
+    vilImagesLarge: TVirtualImageList;
+    vilImagesExtraLarge: TVirtualImageList;
+    vilListState: TVirtualImageList;
 
     procedure Button2Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -603,8 +610,6 @@ var
 
 implementation
 
-uses DatamoduleImagelists;
-
 {$R *.dfm}
 
 procedure TForm1.SyncForm;
@@ -742,7 +747,6 @@ procedure TForm1.FormShow(Sender: TObject);
 begin
   FillStringsWithEasyListStyles(cbViews.Items);
   cbViews.ItemIndex := Ord(EAsyListview1.View);
-  Imagelists.UseImagesForListview(EasyListview1);
   SyncForm;
   SyncGroupsTab;
   cbViews.ItemIndex := 0;
@@ -1163,7 +1167,7 @@ procedure TForm1.EasyListview1GroupInitialize(Sender: TCustomEasyListview;
   Group: TEasyGroup);
 begin
   Group.Caption := 'Group ' + IntToStr(Group.Index);
-  Group.ImageIndex := Random(Imagelists.ImageListGroups.Count);
+  Group.ImageIndex := Random(vilImageListGroups.Count);
 end;
 
 procedure TForm1.ComboBoxItemGroupCheckTypeChange(Sender: TObject);
@@ -1542,10 +1546,10 @@ procedure TForm1.EasyListview1ItemGetImageIndex(
   ImageKind: TEasyImageKind; var ImageIndex: TCommonImageIndexInteger);
 begin
   if (ImageKind = eikNormal) and (Column < 1) then
-    ImageIndex := Item.Index mod ImageLists.ImageListSmall.Count
+    ImageIndex := Item.Index mod vilImagesSmall.Count
   else
   if (ImageKind = eikState) and CheckBoxStateImages.Checked and (Column < 1) then
-    ImageIndex := Item.Index mod ImageListState.Count
+    ImageIndex := Item.Index mod vilListState.Count
 end;
 
 procedure TForm1.EasyListview1GroupGetCaption(Sender: TCustomEasyListview;
@@ -1559,7 +1563,7 @@ procedure TForm1.EasyListview1GroupGetImageIndex(
   ImageKind: TEasyImageKind; var ImageIndex: TCommonImageIndexInteger);
 begin
   if ImageKind = eikNormal then
-    ImageIndex := Group.Index mod ImageLists.ImageListGroups.Count
+    ImageIndex := Group.Index mod vilImageListGroups.Count
 end;
 
 procedure TForm1.EasyListview1ColumnGetImageIndex(
@@ -1567,7 +1571,7 @@ procedure TForm1.EasyListview1ColumnGetImageIndex(
   ImageKind: TEasyImageKind; var ImageIndex: TCommonImageIndexInteger);
 begin
   if ImageKind = eikNormal then
-    ImageIndex := Column.Index mod ImageLists.ImageListSmall.Count
+    ImageIndex := Column.Index mod vilImagesSmall.Count
 end;
 
 procedure TForm1.CheckBoxResizeGroupClick(Sender: TObject);
@@ -2070,7 +2074,7 @@ procedure TForm1.CheckBoxStateImagesClick(Sender: TObject);
 begin
   // Since we are using VirtualItems all we have to do is repaint the control
   if CheckBoxStateImages.Checked then
-    EasyListview1.ImagesState := ImageListState
+    EasyListview1.ImagesState := vilListState
   else
     EasyListview1.ImagesState := nil;
   EasyListview1.Invalidate;

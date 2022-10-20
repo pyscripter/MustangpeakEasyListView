@@ -1339,7 +1339,7 @@ type
     procedure SetSortGlyphIndent(Value: Integer);
     procedure SetStyle(Value: TEasyHeaderButtonStyle);
   protected
-    procedure ChangeScale(M, D: Integer); 
+    procedure ChangeScale(M, D: Integer);
     property Color: TColor read FColor write SetColor default clBtnFace;
     property HilightFocused: Boolean read FHilightFocused write SetHilightFocused default False;
     property HilightFocusedColor: TColor read FHilightFocusedColor write SetHilightFocusedColor default $00F7F7F7;
@@ -3025,7 +3025,7 @@ type
     procedure SetHeight(Value: Integer);
     procedure SetWidth(Value: Integer);
   protected
-    procedure ChangeScale(M, D: Integer); 
+    procedure ChangeScale(M, D: Integer);
     property AutoSizeCaption: Boolean read FAutoSizeCaption write SetAutoSizeCaption default False;
   public
     constructor Create(AnOwner: TCustomEasyListview); override;
@@ -6055,6 +6055,10 @@ implementation
 uses
   {$ifndef DISABLE_ACCESSIBILITY}EasyListviewAccessible,{$endif}
   System.UITypes, System.Math, Vcl.GraphUtil;
+
+type
+  TAccessCustomImageList = class(TCustomImageList)
+  end;
 
 const
   PERSISTENTOBJECTSTATES = [esosSelected, esosEnabled, esosVisible, esosChecked, esosBold]; // States that are stored to a stream for persistance
@@ -9734,16 +9738,7 @@ begin
           cvaCenter: RectArray.IconRect.Top := RectArray.IconRect.Top + (RectHeight(RectArray.IconRect) - Images.Height) div 2;
         end;
 
-        ImageList_DrawEx(Images.Handle,
-          ImageIndex,
-          ACanvas.Handle,
-          RectArray.IconRect.Left,
-          RectArray.IconRect.Top,
-          0,
-          0,
-          CLR_NONE,
-          CLR_NONE,
-          fStyle);
+        TAccessCustomImageList(Images).DoDraw(ImageIndex, ACanvas, RectArray.IconRect.Left, RectArray.IconRect.Top, fStyle, True);
       end
     end
   end
@@ -20931,7 +20926,6 @@ end;
 
 procedure TEasyViewItem.PaintImage(Item: TEasyItem; Column: TEasyColumn; const Caption: string; RectArray: TEasyRectArrayObject; ImageSize: TEasyImageSize; ACanvas: TCanvas);
 var
-  rgbBk, rgbFg: Longword;
   fStyle: Integer;
   OverlayIndex, ImageIndex, PositionIndex, AbsIndex, StateImageIndex: Integer;
   Images, StateImages: TCustomImageList;
@@ -20940,6 +20934,7 @@ var
   TmpBits: TBitmap;
   R: TRect;
   W, H, Scale: Double;
+  PaintEnabled: Boolean;
   Paint: Boolean;
 begin
   if OwnerListview.ShowImages then
@@ -20988,15 +20983,10 @@ begin
             StateImages := GetImageList(Column, Item, eikState);
             if Assigned(StateImages) and (StateImageIndex > -1) then
             begin
-              // Set up a normal Imagelist icon
-              fStyle := ILD_TRANSPARENT;
-              rgbBk := CLR_NONE;
-              rgbFg := CLR_NONE;
-
               RectArray.StateRect.Left := RectArray.StateRect.Left + (RectWidth(RectArray.StateRect) - StateImages.Width) div 2;
               RectArray.StateRect.Top := RectArray.StateRect.Top + (RectHeight(RectArray.StateRect) - StateImages.Height) div 2;
 
-              ImageList_DrawEx(StateImages.Handle, StateImageIndex, ACanvas.Handle, RectArray.StateRect.Left, RectArray.StateRect.Top, 0, 0, rgbBk, rgbFg, fStyle);
+              StateImages.Draw(ACanvas, RectArray.StateRect.Left, RectArray.StateRect.Top, StateImageIndex, dsTransparent, itImage);
             end
           end;
 
@@ -21004,33 +20994,27 @@ begin
           begin
             // Set up a normal Imagelist icon
             fStyle := ILD_TRANSPARENT;
-            rgbBk := CLR_NONE;
-            rgbFg := CLR_NONE;
 
             // Set up to blend the Imagelist icon
             // The param is to allow Thumbnail view to use this paint method and not blend
             // the image
             if OwnerListview.Selection.BlendIcon and
               (((OwnerListview.Focused or Item.OwnerListview.Selection.PopupMode) and Item.Selected) or Item.Hilighted and
-              (PositionIndex < 1)) then
-            begin
+              (PositionIndex < 1))
+            then
               fStyle := fStyle or ILD_SELECTED;
-              if OwnerListview.Selection.ForceDefaultBlend then
-                rgbFg := CLR_DEFAULT
-              else
-                rgbFg := ColorToRGB(OwnerListview.Selection.Color)
-            end;
 
-            if not Item.Enabled or Item.Cut or Item.Ghosted or Item.OwnerListview.ShowInactive then
-            begin
-              fStyle := fStyle or ILD_SELECTED;
-              rgbFg := ColorToRGB(OwnerListview.DisabledBlendColor)
-            end;
+            PaintEnabled := Item.Enabled and not (Item.Cut or Item.Ghosted or Item.OwnerListview.ShowInactive);
 
             if OverlayIndex > -1 then
             begin
-              ImageList_SetOverlayImage(Images.Handle, OverlayIndex, 1);
-              fStyle := FStyle or IndexToOverLayMask(1);
+              if (Images is TCommonSysImages) or (Images is TCommonVirtualImageList) then
+                fStyle := FStyle or IndexToOverLayMask(OverlayIndex)
+              else
+              begin
+                ImageList_SetOverlayImage(Images.Handle, OverlayIndex, 1);
+                fStyle := FStyle or IndexToOverLayMask(1);
+              end;
             end;
 
             if (RectWidth(RectArray.IconRect) < Images.Width) or (RectHeight(RectArray.IconRect) < Images.Height) then
@@ -21042,8 +21026,7 @@ begin
                   TmpBits.PixelFormat := pf32Bit;
                   TmpBits.Width := Images.Width;
                   TmpBits.Height := Images.Height;
-                  ImageList_DrawEx(Images.Handle, ImageIndex, TmpBits.Canvas.Handle, 0, 0, 0, 0, rgbBk, rgbFg, fStyle);
-
+                  TAccessCustomImageList(Images).DoDraw(ImageIndex, TmpBits.Canvas, 0, 0, fStyle, PaintEnabled);
 
                   W := RectWidth(RectArray.IconRect)/Images.Width;
                   H := RectHeight(RectArray.IconRect)/Images.Height;
@@ -21071,11 +21054,11 @@ begin
               end
             end else
             begin
-            RectArray.IconRect.Left := RectArray.IconRect.Left + (RectWidth(RectArray.IconRect) - Images.Width) div 2;
-            RectArray.IconRect.Top := RectArray.IconRect.Top + (RectHeight(RectArray.IconRect) - Images.Height) div 2;
+              RectArray.IconRect.Left := RectArray.IconRect.Left + (RectWidth(RectArray.IconRect) - Images.Width) div 2;
+              RectArray.IconRect.Top := RectArray.IconRect.Top + (RectHeight(RectArray.IconRect) - Images.Height) div 2;
 
-            ImageList_DrawEx(Images.Handle, ImageIndex, ACanvas.Handle, RectArray.IconRect.Left,
-              RectArray.IconRect.Top, 0, 0, rgbBk, rgbFg, fStyle);
+              TAccessCustomImageList(Images).DoDraw(ImageIndex, ACanvas,
+                RectArray.IconRect.Left, RectArray.IconRect.Top, fStyle, PaintEnabled);
             end
           end
         end
@@ -23373,16 +23356,7 @@ begin
       // Get the "normalized" rectangle for the image
       RectArray.IconRect.Left := RectArray.IconRect.Left + (RectWidth(RectArray.IconRect) - Images.Width) div 2;
       RectArray.IconRect.Top := RectArray.IconRect.Top + (RectHeight(RectArray.IconRect) - Images.Height) div 2;
-      ImageList_DrawEx(Images.Handle,
-        Column.ImageIndex,
-        ACanvas.Handle,
-        RectArray.IconRect.Left,
-        RectArray.IconRect.Top,
-        0,
-        0,
-        CLR_NONE,
-        CLR_NONE,
-        fStyle);
+      TAccessCustomImageList(Images).DoDraw(Column.ImageIndex, ACanvas, RectArray.IconRect.Left, RectArray.IconRect.Top, fStyle, True);
     end
   end
 end;

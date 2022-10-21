@@ -1339,7 +1339,7 @@ type
     procedure SetSortGlyphIndent(Value: Integer);
     procedure SetStyle(Value: TEasyHeaderButtonStyle);
   protected
-    procedure ChangeScale(M, D: Integer);
+    procedure ChangeScale(M, D: Integer); 
     property Color: TColor read FColor write SetColor default clBtnFace;
     property HilightFocused: Boolean read FHilightFocused write SetHilightFocused default False;
     property HilightFocusedColor: TColor read FHilightFocusedColor write SetHilightFocusedColor default $00F7F7F7;
@@ -3025,7 +3025,7 @@ type
     procedure SetHeight(Value: Integer);
     procedure SetWidth(Value: Integer);
   protected
-    procedure ChangeScale(M, D: Integer);
+    procedure ChangeScale(M, D: Integer); 
     property AutoSizeCaption: Boolean read FAutoSizeCaption write SetAutoSizeCaption default False;
   public
     constructor Create(AnOwner: TCustomEasyListview); override;
@@ -3454,7 +3454,7 @@ type
   end;
 
   // **************************************************************************
-  // TEasyGroups
+  // TEasyColumns
   //   Collection that contains all the Columns in the control
   // **************************************************************************
   TEasyColumns = class(TEasyCollection)
@@ -19132,6 +19132,7 @@ procedure TEasyHeader.ChangeScale(M, D: Integer);
 begin
   FHeight := MulDiv(FHeight, M, D);
   FColumns.ChangeScale(M, D);
+  FFont.Height := MulDiv(FFont.Height, M, D);
 end;
 
 function TEasyHeader.FirstColumn: TEasyColumn;

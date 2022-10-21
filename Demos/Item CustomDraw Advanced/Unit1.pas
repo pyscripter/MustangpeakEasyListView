@@ -278,13 +278,13 @@ begin
     Hilight := (Item.Selected or Item.Hilighted);
     MyData := TTestData( Item.Data);
     // Load the object inspector default font in a disabled mode
-    LoadTextFont(Item, 0, ACanvas, Hilight);
+    LoadTextFont(Item, ACanvas, Hilight);
     ACanvas.Font.Color := clGray;
     DrawTextFlags := [dtEndEllipsis, dtLeft, dtVCenter];
     Size := TextExtentW('User Name:', ACanvas);
     R.Bottom := R.Top + Size.cy;
     DrawTextWEx(ACanvas.Handle, 'User Name:', R, DrawTextFlags, 1);
-    LoadTextFont(Item, 0, ACanvas, Hilight);
+    LoadTextFont(Item, ACanvas, Hilight);
     Size := TextExtentW(MyData.LastName, ACanvas);
     R.Top := R.Bottom + 1;
     R.Bottom := R.Top + Size.cy;
@@ -310,7 +310,7 @@ begin
     R.Right := HeaderRight;
     R.Left := 150;
     // Load the object inspector default font in a disabled mode
-    LoadTextFont(Item, 0, ACanvas, Hilight);
+    LoadTextFont(Item, ACanvas, Hilight);
     if Item.Index mod 2 = 0 then
       ACanvas.Font.Color := RGB(202, 242, 255)
     else
@@ -321,7 +321,7 @@ begin
     DrawTextWEx(ACanvas.Handle, MyData.EMail, R, DrawTextFlags, 1);
 
     if Item.Index mod 2 = 0 then
-      LoadTextFont(Item, 0, ACanvas, Hilight);
+      LoadTextFont(Item, ACanvas, Hilight);
     Size := TextExtentW(MyData.Street, ACanvas);
     R.Top := R.Bottom + 1;
     R.Bottom := R.Top + Size.cy;
@@ -339,7 +339,7 @@ begin
     R.Right := HeaderRight;
     R.Left := 300;
     // Load the object inspector default font in a disabled mode
-    LoadTextFont(Item, 0, ACanvas, Hilight);
+    LoadTextFont(Item, ACanvas, Hilight);
     ACanvas.Font.Color := clGray;
     DrawTextFlags := [dtEndEllipsis, dtLeft, dtVCenter];
     Size := TextExtentW('Avatar:', ACanvas);

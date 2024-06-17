@@ -23603,8 +23603,8 @@ begin
            if Assigned(LastItem) then
            begin
              LastItem.View.ItemRectArray(LastItem, nil, nil, Item.Caption, RectArray);
-             if TestPt.Y > RectArray.LabelRect.Bottom - 1 then
-               TestPt.Y := RectArray.LabelRect.Bottom - 1;
+             if TestPt.Y > RectArray.BoundsRect.Bottom - 1 then
+               TestPt.Y := RectArray.BoundsRect.Bottom - 1;
            end;
 
            // Look for an item directly below the currently selected item

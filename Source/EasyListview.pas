@@ -44,27 +44,28 @@ uses
   DbugIntf,
   {$ENDIF}
 
-  Types,    // This MUST come before Windows
-  Variants,
-  Windows,
-  Messages,
-  SysUtils,
-  Classes,
-  Graphics,
-  Controls,
-  Themes,
-  UxTheme,
+  System.Types,    // This MUST come before Windows
+  System.Variants,
+  Winapi.Windows,
+  Winapi.Messages,
+  System.SysUtils,
+  System.Classes,
+  System.Generics.Collections,
+  Vcl.Graphics,
+  Vcl.Controls,
+  Vcl.Themes,
+  Winapi.UxTheme,
   {$ifndef DISABLE_ACCESSIBILITY}
-    oleacc, // MSAA support in Delphi 2006 or higher
+    Winapi.oleacc, // MSAA support in Delphi 2006 or higher
   {$ENDIF}
-  ExtCtrls,
-  Forms,
-  ImgList,
-  CommCtrl,
-  ActiveX,
-  Menus,
-  StdCtrls,
-  RTLConsts,
+  Vcl.ExtCtrls,
+  Vcl.Forms,
+  Vcl.ImgList,
+  Winapi.CommCtrl,
+  Winapi.ActiveX,
+  Vcl.Menus,
+  Vcl.StdCtrls,
+  System.RTLConsts,
   {$IFDEF SpTBX}
   SpTBXItem,
   SpTBXSkins,
@@ -3483,17 +3484,8 @@ type
     property OwnerHeader: TEasyHeader read GetOwnerHeader;
   end;
 
-  TColumnPos = class(TList)
-  private
-    function Get(Index: Integer): TEasyColumn;
-    procedure Put(Index: Integer; Item: TEasyColumn);
-  public
-    property Items[Index: Integer]: TEasyColumn read Get write Put; default;
-  end;
-  // **************************************************************************
-  // TEasyHeader
-  //   Header area of the Listview
-  // **************************************************************************
+  TColumnPos = TList<TEasyColumn>;
+
   TEasyHeader = class(TEasyOwnedPersistent)
   private
     {$ifndef DISABLE_ACCESSIBILITY}FAccessible: IAccessible;{$endif}
@@ -6054,7 +6046,10 @@ implementation
 
 uses
   {$ifndef DISABLE_ACCESSIBILITY}EasyListviewAccessible,{$endif}
-  System.UITypes, System.Math, Vcl.GraphUtil;
+  System.UITypes,
+  System.Math,
+  System.Generics.Defaults,
+  Vcl.GraphUtil;
 
 type
   TAccessCustomImageList = class(TCustomImageList)
@@ -10662,7 +10657,7 @@ begin
             FinishEdit;
             FEditing := False;
             // The sync between the TWinControl properties can get messed up so also check with Windows directly
-            if Assigned(OldFocus) and OldFocus.HandleAllocated and OldFocus.CanFocus and (Windows.GetWindowLong(OldFocus.Handle, GWL_STYLE) and WS_VISIBLE <> 0) and IsWindowEnabled(OldFocus.Handle) then
+            if Assigned(OldFocus) and OldFocus.HandleAllocated and OldFocus.CanFocus and (Winapi.Windows.GetWindowLong(OldFocus.Handle, GWL_STYLE) and WS_VISIBLE <> 0) and IsWindowEnabled(OldFocus.Handle) then
               OldFocus.SetFocus;
             Editor := nil;
             EditColumn := nil;
@@ -14201,7 +14196,7 @@ end;
 function TCustomEasyListview.ExecuteDragDrop(AvailableEffects: TCommonDropEffects;
   DataObjectInf: IDataObject; DropSource: IDropSource; var dwEffect: Integer): HRESULT;
 begin
-  Result := ActiveX.DoDragDrop(DataObjectInf, DropSource, DropEffectStatesToDropEffect(AvailableEffects), dwEffect);
+  Result := Winapi.ActiveX.DoDragDrop(DataObjectInf, DropSource, DropEffectStatesToDropEffect(AvailableEffects), dwEffect);
 end;
 
 function TCustomEasyListview.CustomEasyHintWindowClass: THintWindowClass;
@@ -19926,9 +19921,9 @@ begin
   LastWidth := RectWidth(DisplayRect)
 end;
 
-function SortByPosition(Item1, Item2: Pointer): Integer;
+function SortByPosition(const Item1, Item2: TEasyColumn): Integer;
 begin
-  Result := TEasyColumn(Item1).Position - TEasyColumn(Item2).Position
+  Result := Item1.Position - Item2.Position;
 end;
 
 procedure TEasyHeader.Rebuild(Force: Boolean);
@@ -19942,7 +19937,7 @@ begin
     Positions.Capacity := Positions.Count;
     for i := 0 to Columns.Count - 1 do
       Positions.Add(Columns[i]);
-    Positions.Sort(SortByPosition);
+    Positions.Sort(TComparer<TEasyColumn>.Construct(SortByPosition));
     for i := 0 to Columns.Count - 1 do
       Positions[i].FPosition := i;
 
@@ -19955,7 +19950,6 @@ begin
           Columns[i].FWidth := OwnerListview.ClientWidth; // do this direct so not to fire events
       end
     end;
-
 
     SetRect(FViewRect, 0, 0, 0, 0);
     for i := 0 to Positions.Count - 1 do
@@ -20372,7 +20366,7 @@ begin
   if Item.Enabled then
   begin
     ItemRectArray(Item, OwnerListview.Header.FirstColumn, Item.OwnerListview.ScratchCanvas, '', RectArray);
-    Result := Windows.PtInRect(RectArray.TextRect, ViewportPoint);
+    Result := Winapi.Windows.PtInRect(RectArray.TextRect, ViewportPoint);
   end
 end;
 
@@ -20443,8 +20437,8 @@ begin
   if Item.Enabled then
   begin
     ItemRectArray(Item, nil, OwnerListview.ScratchCanvas, '', RectArray);
-    Result := Windows.PtInRect(ExpandTextR(Item, RectArray, SelectType), ViewportPoint) or
-              Windows.PtInRect(ExpandIconR(Item, RectArray, SelectType), ViewportPoint)
+    Result := Winapi.Windows.PtInRect(ExpandTextR(Item, RectArray, SelectType), ViewportPoint) or
+              Winapi.Windows.PtInRect(ExpandIconR(Item, RectArray, SelectType), ViewportPoint)
   end
 end;
 
@@ -22456,14 +22450,14 @@ begin
   begin
     ItemRectArray(Item, nil, OwnerListview.ScratchCanvas, '', RectArray);
     if SelectType = eshtClickselect then
-      Result := Windows.PtInRect(ExpandTextR(Item, RectArray, SelectType), ViewportPoint) or
-                Windows.PtInRect(ExpandIconR(Item, RectArray, SelectType), ViewportPoint)
+      Result := Winapi.Windows.PtInRect(ExpandTextR(Item, RectArray, SelectType), ViewportPoint) or
+                Winapi.Windows.PtInRect(ExpandIconR(Item, RectArray, SelectType), ViewportPoint)
     else
     begin
       R := ExpandIconR(Item, RectArray, SelectType);
       SelectMargin := Round( RectWidth(R) * 0.10);
       InflateRect(R, -SelectMargin, -SelectMargin);
-       Result := Windows.PtInRect(R, ViewportPoint)
+       Result := Winapi.Windows.PtInRect(R, ViewportPoint)
     end
   end
 end;
@@ -25028,7 +25022,7 @@ begin
   if FullRowSelect then
   begin
     R := Item.DisplayRect;
-    Result := Item.Selected and Windows.PtInRect(R, ViewportPoint);
+    Result := Item.Selected and Winapi.Windows.PtInRect(R, ViewportPoint);
   end
   else
     Result := inherited AllowDrag(Item, ViewportPoint);
@@ -25098,8 +25092,8 @@ begin
   begin
     // Selection is always based on the first column
     ItemRectArray(Item, OwnerListview.Header.FirstColumn, OwnerListview.ScratchCanvas, '', RectArray);
-    Result := Windows.PtInRect(ExpandTextR(Item, RectArray, SelectType), ViewportPoint) or
-              Windows.PtInRect(ExpandIconR(Item, RectArray, SelectType), ViewportPoint)
+    Result := Winapi.Windows.PtInRect(ExpandTextR(Item, RectArray, SelectType), ViewportPoint) or
+              Winapi.Windows.PtInRect(ExpandIconR(Item, RectArray, SelectType), ViewportPoint)
   end
 end;
 
@@ -25317,7 +25311,7 @@ begin
     if DefaultAction then
     begin
       if Key > 0 then
-        Group.Caption := SysUtils.AnsiUpperCase(WideChar(Key))
+        Group.Caption := System.SysUtils.AnsiUpperCase(WideChar(Key))
     end;
 
     Group.Key := Key;
@@ -25358,7 +25352,7 @@ begin
             if Length(Caption) = 0 then
               SortList[Index].Key := 0
             else
-              SortList[Index].Key := Ord(SysUtils.AnsiLowerCase(Caption)[1]);
+              SortList[Index].Key := Ord(System.SysUtils.AnsiLowerCase(Caption)[1]);
           end else
             Item.GroupKey[ColumnIndex] := SortList[Index].Key;
         end;
@@ -28069,18 +28063,6 @@ begin
   end
 end;
 
-{ TColumnPos }
-
-function TColumnPos.Get(Index: Integer): TEasyColumn;
-begin
-  Result := inherited Get(Index)
-end;
-
-procedure TColumnPos.Put(Index: Integer; Item: TEasyColumn);
-begin
-  inherited Put(Index, Item)
-end;
-
 { TEasyHeaderDragManager }
 
 constructor TEasyHeaderDragManager.Create(AnOwner: TCustomEasyListview);
@@ -29131,13 +29113,13 @@ procedure TEasyAlphaBlender.BasicBlend(Listview: TCustomEasyListview; ACanvas: T
 var
   R: TRect;
   Obj: THandle;
-  Bits: Windows.BITMAP;
+  Bits: Winapi.Windows.BITMAP;
 begin
   if Assigned(ACanvas) and Assigned(Listview) and not IsRectEmpty(ViewportRect) then
   begin
     Obj := GetCurrentObject(ACanvas.Handle, OBJ_BITMAP);
     if Obj <> 0 then
-      if GetObject(Obj, SizeOf(Windows.BITMAP), @Bits) > 0 then
+      if GetObject(Obj, SizeOf(Winapi.Windows.BITMAP), @Bits) > 0 then
       begin
         if UseScrollPostion then
         begin
